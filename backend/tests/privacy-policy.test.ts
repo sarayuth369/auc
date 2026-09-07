@@ -20,6 +20,19 @@ describe('PRIVACY_POLICY_HTML', () => {
     expect(PRIVACY_POLICY_HTML).not.toContain('claude.ai');
   });
 
+  it('never leaks the GitHub repo link in the footer', () => {
+    expect(PRIVACY_POLICY_HTML).not.toContain('github.com');
+  });
+
+  it('renders the contact email as an image, not as scrapable plain text', () => {
+    // The raw address must not appear anywhere in the source (not even in a
+    // mailto href) - only baked into the two base64 PNG images below.
+    expect(PRIVACY_POLICY_HTML).not.toContain('sarayuth939@gmail.com');
+    expect(PRIVACY_POLICY_HTML).toContain('email-img-light');
+    expect(PRIVACY_POLICY_HTML).toContain('email-img-dark');
+    expect(PRIVACY_POLICY_HTML).toMatch(/data:image\/png;base64,[A-Za-z0-9+/=]{100,}/);
+  });
+
   it('never contains an API key, secret, or credential value', () => {
     expect(PRIVACY_POLICY_HTML).not.toMatch(/AIzaSy[A-Za-z0-9_-]{10,}/);
     expect(PRIVACY_POLICY_HTML.toLowerCase()).not.toMatch(/api[_-]?key\s*[:=]\s*['"][^'"]+['"]/);
