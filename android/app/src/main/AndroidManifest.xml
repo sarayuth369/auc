@@ -2,7 +2,7 @@
     <!-- Needed for the AI resolver fallback (HTTPS call to our own Cloudflare Worker only). -->
     <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:label="auc"
+        android:label="SmartConverter"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
