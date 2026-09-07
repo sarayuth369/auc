@@ -1,4 +1,4 @@
-export const DEFAULT_MODEL = 'gemini-2.5-flash';
+export const DEFAULT_MODEL = 'gemini-3.6-flash';
 
 export interface RawResolveItem {
   value: number;
@@ -82,10 +82,13 @@ export async function resolveWithGemini(
       }),
     });
   } catch (err) {
+    console.error('Gemini fetch failed:', err instanceof Error ? err.message : err);
     throw new GeminiRequestError(err instanceof Error ? err.message : 'Gemini request failed.');
   }
 
   if (!response.ok) {
+    // Safe to log: Gemini's error body, never the request URL (which carries the API key).
+    console.error('Gemini HTTP error', response.status, await response.text());
     throw new GeminiRequestError(`Gemini responded with HTTP ${response.status}.`);
   }
 

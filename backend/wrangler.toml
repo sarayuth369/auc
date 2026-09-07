@@ -5,9 +5,9 @@ compatibility_date = "2024-11-01"
 # GEMINI_API_KEY is a secret, never a var:
 #   wrangler secret put GEMINI_API_KEY
 #
-# GEMINI_MODEL is optional; defaults to gemini-2.5-flash if unset.
+# GEMINI_MODEL is optional; defaults to gemini-3.6-flash if unset.
 [vars]
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.6-flash"
 
 [observability]
 enabled = true
