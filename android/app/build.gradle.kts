@@ -62,6 +62,15 @@ android {
                         "debug signing. Generate a keystore and key.properties first."
                 )
             }
+            // R8 shrinking runs by default on Flutter release builds; without
+            // these keep rules it strips reflection-only classes (see
+            // proguard-rules.pro) and crashes the app on launch.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
