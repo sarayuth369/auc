@@ -1,3 +1,4 @@
+import { buildPublicConfig } from './config';
 import { corsHeaders } from './cors';
 import { errorBody } from './errors';
 import { checkRateLimit, type RateLimitEntry } from './ratelimit';
@@ -29,6 +30,11 @@ export default {
 
     if (url.pathname === '/health' && request.method === 'GET') {
       return json({ ok: true, service: 'auc-backend' }, 200, headers);
+    }
+
+    if (url.pathname === '/api/config' && request.method === 'GET') {
+      // Public runtime config only - never touches GEMINI_API_KEY.
+      return json(buildPublicConfig(env), 200, headers);
     }
 
     if (url.pathname === '/api/resolve' && request.method === 'POST') {

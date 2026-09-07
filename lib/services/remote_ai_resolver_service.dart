@@ -6,30 +6,52 @@ import 'package:http/http.dart' as http;
 
 import '../domain/conversion_exception.dart';
 import '../models/ai_intent.dart';
+import 'ai_config_service.dart';
 import 'ai_resolver_service.dart';
 
 /// Calls the AUC Cloudflare Worker's `/api/resolve` endpoint when the local
 /// parser can't understand the input (unfamiliar language, unknown or
-/// regional unit). The Worker forwards to Gemini for language/unit/context
-/// understanding only - this class never computes a numeric result itself,
-/// it only turns the Worker's structured JSON into an [AiIntent] for
-/// [ConversionEngine] to do the real math on.
+/// regional unit). The Worker forwards to an AI provider (Gemini today,
+/// configurable server-side) for language/unit/context understanding only -
+/// this class never computes a numeric result itself, it only turns the
+/// Worker's structured JSON into an [AiIntent] for [ConversionEngine] to do
+/// the real math on. Flutter never knows or cares which provider answered.
 ///
 /// Every field coming back is treated as untrusted input until validated
 /// here; nothing is passed through to [ConversionEngine] unchecked.
 class RemoteAiResolverService implements AiResolverService {
   final String baseUrl;
   final Duration timeout;
+
+  /// Optional: when given, the request's enabled/timeout are read from the
+  /// latest cached `/api/config` on every call, overriding [timeout] above.
+  /// Left null, this behaves exactly as a fixed-timeout resolver (used by
+  /// existing tests and as the simplest configuration).
+  final AiConfigService? configService;
+
   final http.Client _client;
 
   RemoteAiResolverService({
     required this.baseUrl,
     this.timeout = const Duration(seconds: 12),
+    this.configService,
     http.Client? client,
   }) : _client = client ?? http.Client();
 
   @override
   Future<AiIntent> resolveIntent(String input) async {
+    var effectiveTimeout = timeout;
+    final configService = this.configService;
+    if (configService != null) {
+      final config = await configService.getCached();
+      if (!config.enabled) {
+        throw const ConversionException(
+          'AI assistance is currently unavailable. Try a simpler request.',
+        );
+      }
+      effectiveTimeout = config.timeout;
+    }
+
     final uri = Uri.parse('$baseUrl/api/resolve');
 
     http.Response response;
@@ -40,7 +62,7 @@ class RemoteAiResolverService implements AiResolverService {
             headers: const {'Content-Type': 'application/json'},
             body: jsonEncode({'text': input}),
           )
-          .timeout(timeout);
+          .timeout(effectiveTimeout);
     } on TimeoutException {
       throw const ConversionException(
         'The AI resolver timed out. Check your connection and try again.',

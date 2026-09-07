@@ -60,10 +60,7 @@ void main() {
     });
 
     test('Thai: กิโลกรัม เท่ากับกี่ออนซ์ (equals how many)', () async {
-      expect(
-        await convertText('1 กิโลกรัม เท่ากับกี่ออนซ์'),
-        '35.27396 oz',
-      );
+      expect(await convertText('1 กิโลกรัม เท่ากับกี่ออนซ์'), '35.27396 oz');
     });
 
     test('Thai: กิโลกรัม เป็นกี่ออนซ์ (is how many)', () async {
@@ -150,15 +147,18 @@ void main() {
       expect(await convertText('3 ไร่ 4 งาน เป็นกี่ตารางเมตร'), '6400 m²');
     });
 
-    test('Thai length aliases: กิโลเมตร, เซนติเมตร, มิลลิเมตร, นิ้ว, ฟุต, หลา, ไมล์', () async {
-      expect(await convertText('1 กิโลเมตร to meters'), '1000 m');
-      expect(await convertText('100 เซนติเมตร to meters'), '1 m');
-      expect(await convertText('1000 มิลลิเมตร to meters'), '1 m');
-      expect(await convertText('1 ฟุต to inches'), '12 in');
-      expect(await convertText('1 นิ้ว to cm'), '2.54 cm');
-      expect(await convertText('1 หลา to feet'), '3 ft');
-      expect(await convertText('1 ไมล์ to km'), '1.60934 km');
-    });
+    test(
+      'Thai length aliases: กิโลเมตร, เซนติเมตร, มิลลิเมตร, นิ้ว, ฟุต, หลา, ไมล์',
+      () async {
+        expect(await convertText('1 กิโลเมตร to meters'), '1000 m');
+        expect(await convertText('100 เซนติเมตร to meters'), '1 m');
+        expect(await convertText('1000 มิลลิเมตร to meters'), '1 m');
+        expect(await convertText('1 ฟุต to inches'), '12 in');
+        expect(await convertText('1 นิ้ว to cm'), '2.54 cm');
+        expect(await convertText('1 หลา to feet'), '3 ft');
+        expect(await convertText('1 ไมล์ to km'), '1.60934 km');
+      },
+    );
 
     test('Thai volume aliases: ลิตร, มิลลิลิตร, แกลลอน', () async {
       expect(await convertText('1 ลิตร to milliliters'), '1000 mL');
@@ -166,11 +166,14 @@ void main() {
       expect(await convertText('1 แกลลอน to liters'), '3.78541 L');
     });
 
-    test('Thai temperature aliases: เซลเซียส, องศาเซลเซียส, ฟาเรนไฮต์', () async {
-      expect(await convertText('0 เซลเซียส to F'), '32 °F');
-      expect(await convertText('0 องศาเซลเซียส to fahrenheit'), '32 °F');
-      expect(await convertText('32 ฟาเรนไฮต์ to celsius'), '0 °C');
-    });
+    test(
+      'Thai temperature aliases: เซลเซียส, องศาเซลเซียส, ฟาเรนไฮต์',
+      () async {
+        expect(await convertText('0 เซลเซียส to F'), '32 °F');
+        expect(await convertText('0 องศาเซลเซียส to fahrenheit'), '32 °F');
+        expect(await convertText('32 ฟาเรนไฮต์ to celsius'), '0 °C');
+      },
+    );
   });
 
   group('scientific and engineering units', () {

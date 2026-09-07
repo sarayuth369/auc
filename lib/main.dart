@@ -8,6 +8,7 @@ import 'config/ad_config.dart';
 import 'config/backend_config.dart';
 import 'data/unit_repository.dart';
 import 'domain/conversion_engine.dart';
+import 'services/ai_config_service.dart';
 import 'services/ai_resolver_service.dart';
 import 'services/conversion_service.dart';
 import 'services/favorites_service.dart';
@@ -32,6 +33,12 @@ Future<void> main() async {
         await settingsService.getThemeMode(),
       );
 
+      final aiConfigService = AiConfigService(baseUrl: BackendConfig.baseUrl);
+      // Best-effort, non-blocking: local conversion and app startup never
+      // wait on this. The very first launch (no cache yet) uses the
+      // built-in defaults below until this completes.
+      unawaited(aiConfigService.refresh());
+
       final repository = await UnitRepository.loadFromAssets();
       final conversionService = ConversionService(
         aiResolverService: MockAiResolverService(),
@@ -39,6 +46,7 @@ Future<void> main() async {
         remoteAiResolverService: RemoteAiResolverService(
           baseUrl: BackendConfig.baseUrl,
           timeout: BackendConfig.requestTimeout,
+          configService: aiConfigService,
         ),
       );
 

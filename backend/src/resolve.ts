@@ -1,17 +1,13 @@
 import { clarificationBody, errorBody } from './errors';
-import {
-  DEFAULT_MODEL,
-  GeminiInvalidResponseError,
-  GeminiRequestError,
-  resolveWithGemini,
-} from './gemini';
+import { DEFAULT_MODEL, GeminiInvalidResponseError, GeminiRequestError } from './gemini';
 import { findDimensionMismatch } from './dimensions';
+import { getProvider, UnsupportedProviderError } from './provider-registry';
 import { canonicalRegionalUnit, needsRegionClarification } from './regional';
 import { validateResolveBody } from './validation';
+import type { ConfigEnv } from './config';
 
-export interface ResolveEnv {
+export interface ResolveEnv extends ConfigEnv {
   GEMINI_API_KEY: string;
-  GEMINI_MODEL?: string;
 }
 
 export interface ResolveDeps {
@@ -39,14 +35,19 @@ export async function resolveConversion(
     return { status: 400, body: errorBody(validation.code, validation.message) };
   }
 
+  if (env.AI_ENABLED === 'false') {
+    return { status: 502, body: errorBody('AI_ERROR', 'AI assistance is currently disabled.') };
+  }
+
   let raw;
   try {
-    raw = await resolveWithGemini(
-      validation.text,
-      env.GEMINI_API_KEY,
-      env.GEMINI_MODEL ?? DEFAULT_MODEL,
-      deps.fetchImpl,
-    );
+    const provider = getProvider(env.AI_PROVIDER ?? 'gemini');
+    raw = await provider.resolve({
+      text: validation.text,
+      apiKey: env.GEMINI_API_KEY,
+      model: env.AI_MODEL ?? env.GEMINI_MODEL ?? DEFAULT_MODEL,
+      fetchImpl: deps.fetchImpl,
+    });
   } catch (err) {
     if (err instanceof GeminiInvalidResponseError) {
       return {
@@ -56,6 +57,9 @@ export async function resolveConversion(
     }
     if (err instanceof GeminiRequestError) {
       return { status: 502, body: errorBody('AI_ERROR', 'The AI resolver is temporarily unavailable.') };
+    }
+    if (err instanceof UnsupportedProviderError) {
+      return { status: 502, body: errorBody('AI_ERROR', 'The configured AI provider is unavailable.') };
     }
     throw err;
   }

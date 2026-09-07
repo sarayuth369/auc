@@ -207,4 +207,37 @@ describe('resolveConversion', () => {
     expect(result.status).toBe(422);
     expect(result.body).toMatchObject({ success: false, error: { code: 'UNSUPPORTED_CONVERSION' } });
   });
+
+  it('14. AI_ENABLED=false short-circuits without calling the provider', async () => {
+    const fetchImpl = fetchThrowing('should not be called');
+    const disabledEnv: ResolveEnv = { ...env, AI_ENABLED: 'false' };
+    const result = await resolveConversion({ text: '10 km to miles' }, disabledEnv, { fetchImpl });
+    expect(result.status).toBe(502);
+    expect(result.body).toMatchObject({ success: false, error: { code: 'AI_ERROR' } });
+  });
+
+  it('15. an unsupported AI_PROVIDER returns a controlled AI_ERROR, not a crash', async () => {
+    const fetchImpl = fetchThrowing('should not be called');
+    const badProviderEnv: ResolveEnv = { ...env, AI_PROVIDER: 'openai' };
+    const result = await resolveConversion({ text: '10 km to miles' }, badProviderEnv, { fetchImpl });
+    expect(result.status).toBe(502);
+    expect(result.body).toMatchObject({ success: false, error: { code: 'AI_ERROR' } });
+  });
+
+  it('16. AI_MODEL overrides the legacy GEMINI_MODEL var', async () => {
+    let requestedModel: string | null = null;
+    const fetchImpl = (async (url: string) => {
+      requestedModel = new URL(url).pathname.split('/models/')[1]?.split(':')[0] ?? null;
+      return geminiOk({
+        intent: 'convert',
+        language: 'en',
+        items: [{ value: 10, unit: 'kilometer' }],
+        target_unit: 'mile',
+      });
+    }) as typeof fetch;
+
+    const overrideEnv: ResolveEnv = { ...env, AI_MODEL: 'custom-model' };
+    await resolveConversion({ text: '10 km to miles' }, overrideEnv, { fetchImpl });
+    expect(requestedModel).toBe('custom-model');
+  });
 });
