@@ -11,6 +11,14 @@ class UnitDefinition {
   final String categoryId;
   final bool isSpecial;
 
+  /// Optional global/local metadata, all data-driven from units.json.
+  /// Unset (null) for units that are not tied to a specific language,
+  /// country, or region (e.g. SI/international units).
+  final String? language;
+  final String? country;
+  final String? region;
+  final String? source;
+
   const UnitDefinition({
     required this.canonical,
     required this.symbol,
@@ -18,6 +26,10 @@ class UnitDefinition {
     required this.categoryId,
     required this.isSpecial,
     this.factor,
+    this.language,
+    this.country,
+    this.region,
+    this.source,
   });
 
   factory UnitDefinition.fromJson(
@@ -33,6 +45,10 @@ class UnitDefinition {
       categoryId: categoryId,
       isSpecial: isSpecial,
       factor: (json['factor'] as num?)?.toDouble(),
+      language: json['language'] as String?,
+      country: json['country'] as String?,
+      region: json['region'] as String?,
+      source: json['source'] as String?,
     );
   }
 }

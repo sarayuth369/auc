@@ -8,14 +8,24 @@ import '../models/ai_intent.dart';
 ///   "72 F to C"
 ///   "5 feet 8 inches to cm"
 ///   "3 rai 2 ngan to square meters"
+///   "1 ไร่ to square meters"
+///   "10 วา เป็นกี่เมตร"
+///   "3 ไร่ 2 งาน เป็นกี่ตารางเมตร"
 ///
 /// This never guesses unit meaning - it only extracts numbers and the
-/// literal words around them. Unit resolution happens later in
-/// [UnitRepository]; actual math happens in [ConversionEngine].
+/// literal words around them (Thai script included). Unit resolution
+/// happens later in [UnitRepository]; actual math happens in
+/// [ConversionEngine].
 class LocalParser {
-  static final RegExp _toSplitter = RegExp(r'\bto\b', caseSensitive: false);
+  // English "to" (word boundary) or the Thai connector phrase "เป็นกี่"
+  // ("is how many"). Thai script has no \w-based word boundary in Dart's
+  // regex engine, so the Thai alternative is matched as a plain literal.
+  static final RegExp _toSplitter = RegExp(r'\bto\b|เป็นกี่', caseSensitive: false);
+
+  // Unit tokens may be Latin letters, Thai script (U+0E00-U+0E7F), the
+  // degree sign, or quote marks (for ' / " feet-inches shorthand).
   static final RegExp _pairPattern = RegExp(
-    r'''(-?\d+(?:\.\d+)?)\s*([a-zA-Z°'"]+(?:\s+[a-zA-Z]+)?)''',
+    r'''(-?\d+(?:\.\d+)?)\s*([a-zA-Z฀-๿°'"]+(?:\s+[a-zA-Z฀-๿]+)?)''',
   );
 
   AiIntent parse(String input) {

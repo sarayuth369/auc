@@ -80,6 +80,46 @@ void main() {
     });
   });
 
+  group('thai units', () {
+    test('1 ไร่ -> square meters', () async {
+      expect(await convertText('1 ไร่ to square meters'), '1600 m²');
+    });
+
+    test('1 งาน -> square meters', () async {
+      expect(await convertText('1 งาน to square meters'), '400 m²');
+    });
+
+    test('10 วา -> meters', () async {
+      expect(await convertText('10 วา to meters'), '20 m');
+    });
+
+    test('3 ไร่ 2 งาน -> square meters', () async {
+      expect(await convertText('3 ไร่ 2 งาน to square meters'), '5600 m²');
+    });
+
+    test('Thai connector phrase "เป็นกี่" instead of "to"', () async {
+      expect(await convertText('10 วา เป็นกี่เมตร'), '20 m');
+    });
+
+    test('multi-item Thai connector phrase', () async {
+      expect(await convertText('3 ไร่ 2 งาน เป็นกี่ตารางเมตร'), '5600 m²');
+    });
+
+    test('Thai aliases: เส้น and ตารางวา', () async {
+      expect(await convertText('1 เส้น to meters'), '40 m');
+      expect(await convertText('1 ตารางวา to square meters'), '4 m²');
+    });
+
+    test('English aliases: sen and square wa', () async {
+      expect(await convertText('1 sen to meters'), '40 m');
+      expect(await convertText('1 square wa to square meters'), '4 m²');
+    });
+
+    test('mixed Thai/English input in one sentence', () async {
+      expect(await convertText('3 ไร่ 2 ngan to square meters'), '5600 m²');
+    });
+  });
+
   group('invalid input', () {
     test('empty string throws', () async {
       expect(() => service.convert(''), throwsA(isA<ConversionException>()));

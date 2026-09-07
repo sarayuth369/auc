@@ -5,14 +5,16 @@
       "name": "Length",
       "base_unit": "meter",
       "units": [
-        {"canonical": "meter", "symbol": "m", "aliases": ["meter", "meters", "metre", "metres", "m"], "factor": 1.0},
+        {"canonical": "meter", "symbol": "m", "aliases": ["meter", "meters", "metre", "metres", "m", "เมตร"], "factor": 1.0},
         {"canonical": "kilometer", "symbol": "km", "aliases": ["kilometer", "kilometers", "kilometre", "kilometres", "km"], "factor": 1000.0},
         {"canonical": "centimeter", "symbol": "cm", "aliases": ["centimeter", "centimeters", "centimetre", "centimetres", "cm"], "factor": 0.01},
         {"canonical": "millimeter", "symbol": "mm", "aliases": ["millimeter", "millimeters", "millimetre", "millimetres", "mm"], "factor": 0.001},
         {"canonical": "mile", "symbol": "mi", "aliases": ["mile", "miles", "mi"], "factor": 1609.344},
         {"canonical": "yard", "symbol": "yd", "aliases": ["yard", "yards", "yd"], "factor": 0.9144},
         {"canonical": "foot", "symbol": "ft", "aliases": ["foot", "feet", "ft"], "factor": 0.3048},
-        {"canonical": "inch", "symbol": "in", "aliases": ["inch", "inches", "in"], "factor": 0.0254}
+        {"canonical": "inch", "symbol": "in", "aliases": ["inch", "inches", "in"], "factor": 0.0254},
+        {"canonical": "wa", "symbol": "wa", "aliases": ["wa", "วา"], "factor": 2.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"},
+        {"canonical": "sen", "symbol": "sen", "aliases": ["sen", "เส้น"], "factor": 40.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"}
       ]
     },
     {
@@ -20,14 +22,14 @@
       "name": "Area",
       "base_unit": "square_meter",
       "units": [
-        {"canonical": "square_meter", "symbol": "m²", "aliases": ["square meter", "square meters", "square metre", "square metres", "sqm", "sq m", "m2", "m^2"], "factor": 1.0},
+        {"canonical": "square_meter", "symbol": "m²", "aliases": ["square meter", "square meters", "square metre", "square metres", "sqm", "sq m", "m2", "m^2", "ตารางเมตร"], "factor": 1.0},
         {"canonical": "square_kilometer", "symbol": "km²", "aliases": ["square kilometer", "square kilometers", "square kilometre", "square kilometres", "sqkm", "km2", "km^2"], "factor": 1000000.0},
         {"canonical": "square_foot", "symbol": "ft²", "aliases": ["square foot", "square feet", "sqft", "sq ft", "ft2", "ft^2"], "factor": 0.09290304},
         {"canonical": "acre", "symbol": "acre", "aliases": ["acre", "acres"], "factor": 4046.8564224},
         {"canonical": "hectare", "symbol": "ha", "aliases": ["hectare", "hectares", "ha"], "factor": 10000.0},
-        {"canonical": "rai", "symbol": "rai", "aliases": ["rai"], "factor": 1600.0},
-        {"canonical": "ngan", "symbol": "ngan", "aliases": ["ngan"], "factor": 400.0},
-        {"canonical": "square_wah", "symbol": "wah²", "aliases": ["square wah", "wah", "sqwah"], "factor": 4.0}
+        {"canonical": "rai", "symbol": "rai", "aliases": ["rai", "ไร่"], "factor": 1600.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"},
+        {"canonical": "ngan", "symbol": "ngan", "aliases": ["ngan", "งาน"], "factor": 400.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"},
+        {"canonical": "square_wah", "symbol": "wah²", "aliases": ["square wah", "wah", "sqwah", "square wa", "ตารางวา"], "factor": 4.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"}
       ]
     },
     {
