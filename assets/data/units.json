@@ -9,6 +9,8 @@
         {"canonical": "kilometer", "symbol": "km", "aliases": ["kilometer", "kilometers", "kilometre", "kilometres", "km"], "factor": 1000.0},
         {"canonical": "centimeter", "symbol": "cm", "aliases": ["centimeter", "centimeters", "centimetre", "centimetres", "cm"], "factor": 0.01},
         {"canonical": "millimeter", "symbol": "mm", "aliases": ["millimeter", "millimeters", "millimetre", "millimetres", "mm"], "factor": 0.001},
+        {"canonical": "micrometer", "symbol": "μm", "aliases": ["micrometer", "micrometers", "micrometre", "micrometres", "um", "μm"], "factor": 0.000001, "source": "si"},
+        {"canonical": "nanometer", "symbol": "nm", "aliases": ["nanometer", "nanometers", "nanometre", "nanometres", "nm"], "factor": 0.000000001, "source": "si"},
         {"canonical": "mile", "symbol": "mi", "aliases": ["mile", "miles", "mi"], "factor": 1609.344},
         {"canonical": "yard", "symbol": "yd", "aliases": ["yard", "yards", "yd"], "factor": 0.9144},
         {"canonical": "foot", "symbol": "ft", "aliases": ["foot", "feet", "ft"], "factor": 0.3048},
@@ -105,6 +107,55 @@
         {"canonical": "megabyte", "symbol": "MB", "aliases": ["megabyte", "megabytes", "mb"], "factor": 1048576.0},
         {"canonical": "gigabyte", "symbol": "GB", "aliases": ["gigabyte", "gigabytes", "gb"], "factor": 1073741824.0},
         {"canonical": "terabyte", "symbol": "TB", "aliases": ["terabyte", "terabytes", "tb"], "factor": 1099511627776.0}
+      ]
+    },
+    {
+      "id": "pressure",
+      "name": "Pressure",
+      "base_unit": "pascal",
+      "units": [
+        {"canonical": "pascal", "symbol": "Pa", "aliases": ["pascal", "pascals", "pa"], "factor": 1.0, "source": "si"},
+        {"canonical": "kilopascal", "symbol": "kPa", "aliases": ["kilopascal", "kilopascals", "kpa"], "factor": 1000.0, "source": "si"},
+        {"canonical": "megapascal", "symbol": "MPa", "aliases": ["megapascal", "megapascals", "mpa"], "factor": 1000000.0, "source": "si"},
+        {"canonical": "bar", "symbol": "bar", "aliases": ["bar", "bars"], "factor": 100000.0, "source": "engineering"},
+        {"canonical": "psi", "symbol": "psi", "aliases": ["psi", "pounds per square inch", "lbf/in2"], "factor": 6894.757293168361, "source": "us_customary"},
+        {"canonical": "atmosphere", "symbol": "atm", "aliases": ["atmosphere", "atmospheres", "atm"], "factor": 101325.0, "source": "engineering"}
+      ]
+    },
+    {
+      "id": "force",
+      "name": "Force",
+      "base_unit": "newton",
+      "units": [
+        {"canonical": "newton", "symbol": "N", "aliases": ["newton", "newtons", "n"], "factor": 1.0, "source": "si"},
+        {"canonical": "kilonewton", "symbol": "kN", "aliases": ["kilonewton", "kilonewtons", "kn"], "factor": 1000.0, "source": "si"},
+        {"canonical": "pound_force", "symbol": "lbf", "aliases": ["pound force", "pound-force", "lbf"], "factor": 4.4482216152605, "source": "us_customary"},
+        {"canonical": "kilogram_force", "symbol": "kgf", "aliases": ["kilogram force", "kilogram-force", "kgf"], "factor": 9.80665, "source": "engineering"}
+      ]
+    },
+    {
+      "id": "energy",
+      "name": "Energy",
+      "base_unit": "joule",
+      "units": [
+        {"canonical": "joule", "symbol": "J", "aliases": ["joule", "joules", "j"], "factor": 1.0, "source": "si"},
+        {"canonical": "kilojoule", "symbol": "kJ", "aliases": ["kilojoule", "kilojoules", "kj"], "factor": 1000.0, "source": "si"},
+        {"canonical": "megajoule", "symbol": "MJ", "aliases": ["megajoule", "megajoules", "mj"], "factor": 1000000.0, "source": "si"},
+        {"canonical": "watt_hour", "symbol": "Wh", "aliases": ["watt hour", "watt hours", "wh"], "factor": 3600.0, "source": "engineering"},
+        {"canonical": "kilowatt_hour", "symbol": "kWh", "aliases": ["kilowatt hour", "kilowatt hours", "kwh"], "factor": 3600000.0, "source": "engineering"},
+        {"canonical": "btu", "symbol": "BTU", "aliases": ["btu", "british thermal unit", "british thermal units"], "factor": 1055.05585262, "source": "us_customary"}
+      ]
+    },
+    {
+      "id": "power",
+      "name": "Power",
+      "base_unit": "watt",
+      "units": [
+        {"canonical": "watt", "symbol": "W", "aliases": ["watt", "watts", "w"], "factor": 1.0, "source": "si"},
+        {"canonical": "kilowatt", "symbol": "kW", "aliases": ["kilowatt", "kilowatts", "kw"], "factor": 1000.0, "source": "si"},
+        {"canonical": "megawatt", "symbol": "MW", "aliases": ["megawatt", "megawatts", "mw"], "factor": 1000000.0, "source": "si"},
+        {"canonical": "horsepower", "symbol": "hp", "aliases": ["horsepower", "hp"], "factor": 745.6998715822702, "source": "us_customary"},
+        {"canonical": "btu_per_hour", "symbol": "BTU/h", "aliases": ["btu per hour", "btu/h", "btuh"], "factor": 0.29307107017222222, "source": "us_customary"}
       ]
     }
   ]

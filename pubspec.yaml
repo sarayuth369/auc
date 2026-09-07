@@ -39,6 +39,8 @@ dependencies:
   shared_preferences: ^2.3.3
   # Native share sheet for the "Share" action on a result.
   share_plus: ^10.1.4
+  # HTTP client for the AI resolver fallback (calls our own Cloudflare Worker only).
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:

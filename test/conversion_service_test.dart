@@ -120,6 +120,42 @@ void main() {
     });
   });
 
+  group('scientific and engineering units', () {
+    test('psi -> kPa', () async {
+      expect(await convertText('100 psi to kPa'), '689.47573 kPa');
+    });
+
+    test('MPa -> bar', () async {
+      expect(await convertText('1 MPa to bar'), '10 bar');
+    });
+
+    test('N -> kN', () async {
+      expect(await convertText('1000 N to kN'), '1 kN');
+    });
+
+    test('kWh -> MJ', () async {
+      expect(await convertText('1 kWh to MJ'), '3.6 MJ');
+    });
+
+    test('BTU/h -> kW', () async {
+      expect(await convertText('12000 BTU/h to kW'), '3.51685 kW');
+    });
+
+    test('nm -> micrometers', () async {
+      expect(await convertText('500 nm to micrometers'), '0.5 μm');
+    });
+  });
+
+  group('dimension safety', () {
+    test('BTU -> W is rejected locally as a category mismatch (no network needed)', () async {
+      expect(() => service.convert('1 BTU to W'), throwsA(isA<ConversionException>()));
+    });
+
+    test('J -> W is rejected locally as a category mismatch (no network needed)', () async {
+      expect(() => service.convert('1 J to W'), throwsA(isA<ConversionException>()));
+    });
+  });
+
   group('invalid input', () {
     test('empty string throws', () async {
       expect(() => service.convert(''), throwsA(isA<ConversionException>()));

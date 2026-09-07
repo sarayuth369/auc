@@ -7,6 +7,7 @@ import '../../../models/conversion_result.dart';
 class ResultCard extends StatelessWidget {
   final ConversionResult? result;
   final String? errorText;
+  final bool isClarification;
   final bool isFavorite;
   final VoidCallback? onToggleFavorite;
 
@@ -14,6 +15,7 @@ class ResultCard extends StatelessWidget {
     super.key,
     this.result,
     this.errorText,
+    this.isClarification = false,
     this.isFavorite = false,
     this.onToggleFavorite,
   });
@@ -23,16 +25,21 @@ class ResultCard extends StatelessWidget {
     final error = errorText;
     if (error != null) {
       final scheme = Theme.of(context).colorScheme;
+      final background = isClarification ? scheme.tertiaryContainer : scheme.errorContainer;
+      final foreground = isClarification ? scheme.onTertiaryContainer : scheme.onErrorContainer;
       return Card(
-        color: scheme.errorContainer,
+        color: background,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Icon(Icons.error_outline, color: scheme.onErrorContainer),
+              Icon(
+                isClarification ? Icons.help_outline : Icons.error_outline,
+                color: foreground,
+              ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(error, style: TextStyle(color: scheme.onErrorContainer)),
+                child: Text(error, style: TextStyle(color: foreground)),
               ),
             ],
           ),

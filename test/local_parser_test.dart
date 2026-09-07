@@ -68,4 +68,12 @@ void main() {
     expect(intent.items[1].unit, 'ngan');
     expect(intent.targetUnit, 'square meters');
   });
+
+  test('parses a compound slash unit like "BTU/h"', () {
+    final intent = parser.parse('12000 BTU/h to kW');
+    expect(intent.items, hasLength(1));
+    expect(intent.items.first.value, 12000);
+    expect(intent.items.first.unit, 'BTU/h');
+    expect(intent.targetUnit, 'kW');
+  });
 }

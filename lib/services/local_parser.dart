@@ -23,9 +23,10 @@ class LocalParser {
   static final RegExp _toSplitter = RegExp(r'\bto\b|เป็นกี่', caseSensitive: false);
 
   // Unit tokens may be Latin letters, Thai script (U+0E00-U+0E7F), the
-  // degree sign, or quote marks (for ' / " feet-inches shorthand).
+  // degree sign, quote marks (for ' / " feet-inches shorthand), or a slash
+  // (for compound units like "BTU/h", "km/h").
   static final RegExp _pairPattern = RegExp(
-    r'''(-?\d+(?:\.\d+)?)\s*([a-zA-Z฀-๿°'"]+(?:\s+[a-zA-Z฀-๿]+)?)''',
+    r'''(-?\d+(?:\.\d+)?)\s*([a-zA-Z฀-๿°'"/]+(?:\s+[a-zA-Z฀-๿]+)?)''',
   );
 
   AiIntent parse(String input) {

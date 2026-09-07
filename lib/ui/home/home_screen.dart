@@ -32,6 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _controller = TextEditingController();
   ConversionResult? _result;
   String? _errorText;
+  bool _isClarification = false;
   bool _isFavorite = false;
   bool _isConverting = false;
 
@@ -48,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isConverting = true;
       _errorText = null;
+      _isClarification = false;
     });
 
     try {
@@ -68,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _result = null;
         _errorText = e.message;
+        _isClarification = e is ClarificationException;
       });
     } finally {
       setState(() => _isConverting = false);
@@ -102,6 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _controller.text = entry.inputText;
       _result = null;
       _errorText = null;
+      _isClarification = false;
     });
   }
 
@@ -183,6 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ResultCard(
                 result: _result,
                 errorText: _errorText,
+                isClarification: _isClarification,
                 isFavorite: _isFavorite,
                 onToggleFavorite: _toggleFavorite,
               ),
