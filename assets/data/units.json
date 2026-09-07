@@ -1,0 +1,109 @@
+{
+  "categories": [
+    {
+      "id": "length",
+      "name": "Length",
+      "base_unit": "meter",
+      "units": [
+        {"canonical": "meter", "symbol": "m", "aliases": ["meter", "meters", "metre", "metres", "m"], "factor": 1.0},
+        {"canonical": "kilometer", "symbol": "km", "aliases": ["kilometer", "kilometers", "kilometre", "kilometres", "km"], "factor": 1000.0},
+        {"canonical": "centimeter", "symbol": "cm", "aliases": ["centimeter", "centimeters", "centimetre", "centimetres", "cm"], "factor": 0.01},
+        {"canonical": "millimeter", "symbol": "mm", "aliases": ["millimeter", "millimeters", "millimetre", "millimetres", "mm"], "factor": 0.001},
+        {"canonical": "mile", "symbol": "mi", "aliases": ["mile", "miles", "mi"], "factor": 1609.344},
+        {"canonical": "yard", "symbol": "yd", "aliases": ["yard", "yards", "yd"], "factor": 0.9144},
+        {"canonical": "foot", "symbol": "ft", "aliases": ["foot", "feet", "ft"], "factor": 0.3048},
+        {"canonical": "inch", "symbol": "in", "aliases": ["inch", "inches", "in"], "factor": 0.0254}
+      ]
+    },
+    {
+      "id": "area",
+      "name": "Area",
+      "base_unit": "square_meter",
+      "units": [
+        {"canonical": "square_meter", "symbol": "m²", "aliases": ["square meter", "square meters", "square metre", "square metres", "sqm", "sq m", "m2", "m^2"], "factor": 1.0},
+        {"canonical": "square_kilometer", "symbol": "km²", "aliases": ["square kilometer", "square kilometers", "square kilometre", "square kilometres", "sqkm", "km2", "km^2"], "factor": 1000000.0},
+        {"canonical": "square_foot", "symbol": "ft²", "aliases": ["square foot", "square feet", "sqft", "sq ft", "ft2", "ft^2"], "factor": 0.09290304},
+        {"canonical": "acre", "symbol": "acre", "aliases": ["acre", "acres"], "factor": 4046.8564224},
+        {"canonical": "hectare", "symbol": "ha", "aliases": ["hectare", "hectares", "ha"], "factor": 10000.0},
+        {"canonical": "rai", "symbol": "rai", "aliases": ["rai"], "factor": 1600.0},
+        {"canonical": "ngan", "symbol": "ngan", "aliases": ["ngan"], "factor": 400.0},
+        {"canonical": "square_wah", "symbol": "wah²", "aliases": ["square wah", "wah", "sqwah"], "factor": 4.0}
+      ]
+    },
+    {
+      "id": "weight",
+      "name": "Weight",
+      "base_unit": "kilogram",
+      "units": [
+        {"canonical": "kilogram", "symbol": "kg", "aliases": ["kilogram", "kilograms", "kg"], "factor": 1.0},
+        {"canonical": "gram", "symbol": "g", "aliases": ["gram", "grams", "g"], "factor": 0.001},
+        {"canonical": "milligram", "symbol": "mg", "aliases": ["milligram", "milligrams", "mg"], "factor": 0.000001},
+        {"canonical": "pound", "symbol": "lb", "aliases": ["pound", "pounds", "lb", "lbs"], "factor": 0.45359237},
+        {"canonical": "ounce", "symbol": "oz", "aliases": ["ounce", "ounces", "oz"], "factor": 0.028349523125},
+        {"canonical": "metric_ton", "symbol": "t", "aliases": ["ton", "tons", "tonne", "tonnes", "metric ton", "t"], "factor": 1000.0}
+      ]
+    },
+    {
+      "id": "volume",
+      "name": "Volume",
+      "base_unit": "liter",
+      "units": [
+        {"canonical": "liter", "symbol": "L", "aliases": ["liter", "liters", "litre", "litres", "l"], "factor": 1.0},
+        {"canonical": "milliliter", "symbol": "mL", "aliases": ["milliliter", "milliliters", "millilitre", "millilitres", "ml"], "factor": 0.001},
+        {"canonical": "cubic_meter", "symbol": "m³", "aliases": ["cubic meter", "cubic meters", "cubic metre", "cubic metres", "m3", "m^3"], "factor": 1000.0},
+        {"canonical": "gallon", "symbol": "gal", "aliases": ["gallon", "gallons", "gal"], "factor": 3.785411784},
+        {"canonical": "quart", "symbol": "qt", "aliases": ["quart", "quarts", "qt"], "factor": 0.946352946},
+        {"canonical": "pint", "symbol": "pt", "aliases": ["pint", "pints", "pt"], "factor": 0.473176473},
+        {"canonical": "cup", "symbol": "cup", "aliases": ["cup", "cups"], "factor": 0.2365882365},
+        {"canonical": "fluid_ounce", "symbol": "fl oz", "aliases": ["fluid ounce", "fluid ounces", "fl oz", "floz"], "factor": 0.0295735295625}
+      ]
+    },
+    {
+      "id": "temperature",
+      "name": "Temperature",
+      "base_unit": "celsius",
+      "special": true,
+      "units": [
+        {"canonical": "celsius", "symbol": "°C", "aliases": ["celsius", "c", "centigrade", "°c"]},
+        {"canonical": "fahrenheit", "symbol": "°F", "aliases": ["fahrenheit", "f", "°f"]},
+        {"canonical": "kelvin", "symbol": "K", "aliases": ["kelvin", "k"]}
+      ]
+    },
+    {
+      "id": "speed",
+      "name": "Speed",
+      "base_unit": "meter_per_second",
+      "units": [
+        {"canonical": "meter_per_second", "symbol": "m/s", "aliases": ["meter per second", "meters per second", "m/s", "mps"], "factor": 1.0},
+        {"canonical": "kilometer_per_hour", "symbol": "km/h", "aliases": ["kilometer per hour", "kilometers per hour", "km/h", "kph", "kmh"], "factor": 0.2777777778},
+        {"canonical": "mile_per_hour", "symbol": "mph", "aliases": ["mile per hour", "miles per hour", "mph"], "factor": 0.44704},
+        {"canonical": "knot", "symbol": "kn", "aliases": ["knot", "knots", "kn"], "factor": 0.5144444444}
+      ]
+    },
+    {
+      "id": "time",
+      "name": "Time",
+      "base_unit": "second",
+      "units": [
+        {"canonical": "second", "symbol": "s", "aliases": ["second", "seconds", "sec", "s"], "factor": 1.0},
+        {"canonical": "minute", "symbol": "min", "aliases": ["minute", "minutes", "min"], "factor": 60.0},
+        {"canonical": "hour", "symbol": "hr", "aliases": ["hour", "hours", "hr", "h"], "factor": 3600.0},
+        {"canonical": "day", "symbol": "day", "aliases": ["day", "days", "d"], "factor": 86400.0},
+        {"canonical": "week", "symbol": "wk", "aliases": ["week", "weeks", "wk"], "factor": 604800.0}
+      ]
+    },
+    {
+      "id": "data",
+      "name": "Data",
+      "base_unit": "byte",
+      "units": [
+        {"canonical": "byte", "symbol": "B", "aliases": ["byte", "bytes"], "factor": 1.0},
+        {"canonical": "bit", "symbol": "bit", "aliases": ["bit", "bits"], "factor": 0.125},
+        {"canonical": "kilobyte", "symbol": "KB", "aliases": ["kilobyte", "kilobytes", "kb"], "factor": 1024.0},
+        {"canonical": "megabyte", "symbol": "MB", "aliases": ["megabyte", "megabytes", "mb"], "factor": 1048576.0},
+        {"canonical": "gigabyte", "symbol": "GB", "aliases": ["gigabyte", "gigabytes", "gb"], "factor": 1073741824.0},
+        {"canonical": "terabyte", "symbol": "TB", "aliases": ["terabyte", "terabytes", "tb"], "factor": 1099511627776.0}
+      ]
+    }
+  ]
+}
