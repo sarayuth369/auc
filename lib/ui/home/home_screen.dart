@@ -156,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Universal Converter'),
+        title: const Text('SmartConverter'),
         actions: [
           IconButton(
             tooltip: 'History',

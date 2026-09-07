@@ -40,7 +40,7 @@ void main() {
   ) async {
     await tester.pumpWidget(buildApp());
 
-    expect(find.text('AI Universal Converter'), findsOneWidget);
+    expect(find.text('SmartConverter'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), '10 km to miles');
     await tester.tap(find.widgetWithText(FilledButton, 'Convert'));

@@ -28,7 +28,7 @@ class AucApp extends StatelessWidget {
       valueListenable: themeModeNotifier,
       builder: (context, themeMode, _) {
         return MaterialApp(
-          title: 'AI Universal Converter',
+          title: 'SmartConverter',
           debugShowCheckedModeBanner: false,
           themeMode: themeMode,
           theme: ThemeData(

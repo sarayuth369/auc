@@ -7,7 +7,7 @@ untouched, full-bleed.
 """
 from PIL import Image
 
-SRC = "app_icon_1024.png"
+SRC = "app_icon_512.png"
 OUT = "app_icon_adaptive_foreground.png"
 CANVAS = 1024
 # Android's adaptive-icon safe zone is the inner 66/108 of the canvas.
