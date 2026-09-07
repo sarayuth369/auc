@@ -1,0 +1,360 @@
+<title>AUC Privacy Policy</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+:root{
+  --bg:#faf9f7;
+  --surface:#ffffff;
+  --ink:#1c1a22;
+  --ink-muted:#5d5866;
+  --accent:#4a3fd1;
+  --accent-soft:#edeaff;
+  --border:#e6e2ec;
+  --mono-chip:#f1eef8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131019;
+    --surface:#1b1723;
+    --ink:#ede9f4;
+    --ink-muted:#a49dba;
+    --accent:#9b8fff;
+    --accent-soft:#251f38;
+    --border:#312a42;
+    --mono-chip:#221d31;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131019;
+  --surface:#1b1723;
+  --ink:#ede9f4;
+  --ink-muted:#a49dba;
+  --accent:#9b8fff;
+  --accent-soft:#251f38;
+  --border:#312a42;
+  --mono-chip:#221d31;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Source Serif 4', Georgia, 'Times New Roman', serif;
+  font-size:17px;
+  line-height:1.65;
+}
+::selection{background:var(--accent-soft);}
+
+.wrap{
+  max-width:1180px;
+  margin:0 auto;
+  padding:0 24px;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:0;
+}
+@media (min-width:960px){
+  .wrap{grid-template-columns:240px minmax(0,720px);gap:64px;padding:0 40px;}
+}
+
+header.top{
+  border-bottom:1px solid var(--border);
+  padding:28px 24px 24px;
+}
+@media (min-width:960px){ header.top{padding:36px 40px 28px;} }
+
+.eyebrow{
+  font-family:'IBM Plex Mono', ui-monospace, monospace;
+  font-size:12.5px;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  color:var(--accent);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+
+h1{
+  font-family:'Archivo', system-ui, sans-serif;
+  font-weight:700;
+  font-size:clamp(28px,4vw,40px);
+  letter-spacing:-0.01em;
+  margin:10px 0 6px;
+  text-wrap:balance;
+  max-width:1180px;
+}
+.meta{
+  font-family:'IBM Plex Mono', ui-monospace, monospace;
+  font-size:13px;
+  color:var(--ink-muted);
+}
+.meta b{color:var(--ink);font-weight:600;}
+
+nav.toc{
+  padding:32px 0;
+  align-self:start;
+  position:static;
+}
+@media (min-width:960px){
+  nav.toc{position:sticky; top:32px;}
+}
+nav.toc .label{
+  font-family:'IBM Plex Mono', ui-monospace, monospace;
+  font-size:11.5px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--ink-muted);
+  margin-bottom:12px;
+}
+nav.toc ol{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  counter-reset:toc;
+}
+nav.toc li{counter-increment:toc;}
+nav.toc a{
+  display:flex;
+  gap:10px;
+  padding:7px 8px;
+  margin:0 -8px;
+  border-radius:6px;
+  text-decoration:none;
+  color:var(--ink-muted);
+  font-family:'Archivo', system-ui, sans-serif;
+  font-size:13.5px;
+  font-weight:600;
+}
+nav.toc a::before{
+  content:counter(toc, decimal-leading-zero);
+  font-family:'IBM Plex Mono', ui-monospace, monospace;
+  font-weight:500;
+  color:var(--accent);
+  font-size:12px;
+  padding-top:1px;
+}
+nav.toc a:hover{background:var(--accent-soft); color:var(--ink);}
+
+main{padding:32px 0 80px;}
+
+section{
+  padding-top:36px;
+  margin-top:36px;
+  border-top:1px solid var(--border);
+  scroll-margin-top:24px;
+}
+section:first-of-type{border-top:none;margin-top:8px;padding-top:0;}
+
+.sec-head{
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  margin-bottom:14px;
+}
+.sec-num{
+  font-family:'IBM Plex Mono', ui-monospace, monospace;
+  font-size:14px;
+  color:var(--accent);
+  font-weight:600;
+}
+h2{
+  font-family:'Archivo', system-ui, sans-serif;
+  font-weight:600;
+  font-size:22px;
+  margin:0;
+  text-wrap:balance;
+}
+p{margin:0 0 14px; max-width:66ch;}
+p:last-child{margin-bottom:0;}
+ul{margin:0 0 14px; padding-left:1.2em; max-width:64ch;}
+li{margin-bottom:6px;}
+strong{font-weight:600;}
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-family:'IBM Plex Mono', ui-monospace, monospace;
+  font-size:12px;
+  font-weight:500;
+  padding:3px 9px;
+  border-radius:999px;
+  background:var(--mono-chip);
+  color:var(--ink-muted);
+  border:1px solid var(--border);
+}
+
+.table-wrap{overflow-x:auto; margin:8px 0 18px;}
+table{
+  border-collapse:collapse;
+  width:100%;
+  min-width:560px;
+  font-family:'IBM Plex Mono', ui-monospace, monospace;
+  font-size:13.5px;
+}
+th,td{
+  text-align:left;
+  padding:10px 14px;
+  border-bottom:1px solid var(--border);
+  vertical-align:top;
+}
+th{
+  font-size:11px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--ink-muted);
+  font-weight:600;
+  border-bottom:2px solid var(--border);
+}
+td:first-child, th:first-child{padding-left:0;}
+tr:last-child td{border-bottom:none;}
+.chip-yes{color:var(--accent); font-weight:600;}
+.chip-no{color:var(--ink-muted);}
+
+.callout{
+  background:var(--accent-soft);
+  border-radius:10px;
+  padding:16px 18px;
+  margin:18px 0;
+  font-size:15.5px;
+}
+.callout .lbl{
+  font-family:'IBM Plex Mono', ui-monospace, monospace;
+  font-size:11px;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  color:var(--accent);
+  display:block;
+  margin-bottom:6px;
+}
+
+footer{
+  border-top:1px solid var(--border);
+  padding:28px 24px 60px;
+  font-family:'IBM Plex Mono', ui-monospace, monospace;
+  font-size:12.5px;
+  color:var(--ink-muted);
+}
+@media (min-width:960px){ footer{padding:28px 40px 60px;} }
+footer a{color:var(--accent);}
+
+a{color:var(--accent);}
+</style>
+
+<header class="top">
+  <div class="eyebrow"><span class="dot"></span> AUC — AI Universal Converter</div>
+  <h1>Privacy Policy</h1>
+  <div class="meta">Effective <b>7 September 2026</b> &nbsp;·&nbsp; Version <b>1.0.0</b> &nbsp;·&nbsp; Platform <b>Android</b></div>
+</header>
+
+<div class="wrap">
+  <nav class="toc">
+    <div class="label">On this page</div>
+    <ol>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#on-device">Data on your device</a></li>
+      <li><a href="#ai-fallback">When AI assistance is used</a></li>
+      <li><a href="#third-parties">Third-party services</a></li>
+      <li><a href="#advertising">Advertising</a></li>
+      <li><a href="#not-collected">What we don't do</a></li>
+      <li><a href="#retention">Retention &amp; deletion</a></li>
+      <li><a href="#security">Security</a></li>
+      <li><a href="#children">Children's privacy</a></li>
+      <li><a href="#changes">Changes to this policy</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="overview">
+      <div class="sec-head"><span class="sec-num">§</span><h2>Overview</h2></div>
+      <p>AUC — AI Universal Converter ("AUC", "the app") converts natural-language text ("10 km to miles", "3 ไร่ to square meters") into a numeric result. Most conversions are computed <strong>entirely on your device</strong> by a deterministic conversion engine, using no network connection at all.</p>
+      <p>When the on-device parser cannot understand a request — an unfamiliar language, an unrecognized or region-specific unit — the app asks an AI service to interpret the <em>wording</em> only. The AI never computes your result; a fixed, on-device calculation always does that. This policy explains exactly what leaves your device, to whom, and why.</p>
+    </section>
+
+    <section id="on-device">
+      <div class="sec-head"><span class="sec-num">§</span><h2>Data on your device</h2></div>
+      <p>Your conversion <strong>history</strong> and <strong>favorites</strong> are saved locally on your device using Android's standard app-private storage. AUC has no user accounts, no login, and no server-side database of your conversions — this data never leaves your device unless you explicitly use the Share action below.</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Stored locally</th><th>Leaves device?</th><th>Purpose</th></tr>
+          <tr><td>Conversion history (up to 50 entries)</td><td class="chip-no">Never</td><td>Let you revisit past conversions</td></tr>
+          <tr><td>Favorited conversions</td><td class="chip-no">Never</td><td>Quick access to conversions you pin</td></tr>
+        </table>
+      </div>
+      <p>Tapping <span class="pill">Share</span> on a result hands that one line of text to the Android system share sheet, which is entirely under your control — AUC does not see or log which app or contact you choose.</p>
+    </section>
+
+    <section id="ai-fallback">
+      <div class="sec-head"><span class="sec-num">§</span><h2>When AI assistance is used</h2></div>
+      <p>If, and only if, the on-device parser cannot resolve your input, AUC sends the <strong>text you typed</strong> — nothing else, no device identifiers, no history, no location — over an encrypted HTTPS connection to AUC's own backend, which asks Google's Gemini API to identify the quantities, units, and target unit you meant. That structured answer (e.g. <span class="pill">10, kilometer → mile</span>) is sent back and validated on your device before the on-device engine computes the final number.</p>
+      <div class="callout">
+        <span class="lbl">Why this design</span>
+        The AI is a language interpreter, never a calculator: it never produces your numeric result, and the Gemini API key it requires never exists inside the app itself — only on AUC's backend server.
+      </div>
+      <p>If a unit genuinely depends on a region AUC can't infer (for example, a "bigha", whose size varies by Indian state), the app will ask you to clarify rather than guess.</p>
+    </section>
+
+    <section id="third-parties">
+      <div class="sec-head"><span class="sec-num">§</span><h2>Third-party services</h2></div>
+      <p>AUC relies on three external services. AUC's own code never sees or stores a persistent copy of your conversion text beyond the single request needed to answer it.</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Service</th><th>Receives</th><th>Purpose</th><th>In transit</th></tr>
+          <tr><td>Cloudflare Workers<br><span style="color:var(--ink-muted)">(AUC's own backend)</span></td><td>Your typed text, only on AI fallback</td><td>Relays the request to Gemini; applies validation and safety checks</td><td class="chip-yes">TLS</td></tr>
+          <tr><td>Google Gemini API</td><td>Your typed text, only on AI fallback</td><td>Interprets language/units into structured data</td><td class="chip-yes">TLS</td></tr>
+          <tr><td>Google AdMob</td><td>Advertising identifiers, device/app info</td><td>Shows banner ads that support free use of the app</td><td class="chip-yes">TLS</td></tr>
+        </table>
+      </div>
+      <p>Google's own privacy terms govern data it processes for Gemini and AdMob: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a>.</p>
+    </section>
+
+    <section id="advertising">
+      <div class="sec-head"><span class="sec-num">§</span><h2>Advertising</h2></div>
+      <p>AUC shows a single, non-intrusive banner ad via Google AdMob to support free use of the app. AdMob may use the Android Advertising ID and device/app signals to select and measure ads, per Google's own advertising and privacy policies. AUC does not build its own advertising profile of you, and does not show ads while an AI request is in progress or in a way that interrupts a conversion. If an ad fails to load — no network, no fill — the app continues to work normally; ads never block or affect conversion accuracy.</p>
+    </section>
+
+    <section id="not-collected">
+      <div class="sec-head"><span class="sec-num">§</span><h2>What we don't do</h2></div>
+      <ul>
+        <li>No account creation, login, or personal profile of any kind.</li>
+        <li>No server-side database storing your conversions or history.</li>
+        <li>No sale of personal data, to anyone, ever.</li>
+        <li>No location, contacts, camera, microphone, or storage permissions requested.</li>
+        <li>No Gemini API key or Cloudflare credential is ever embedded in the app — both live only on AUC's backend server as protected secrets.</li>
+      </ul>
+    </section>
+
+    <section id="retention">
+      <div class="sec-head"><span class="sec-num">§</span><h2>Retention &amp; deletion</h2></div>
+      <p>History and favorites remain on your device until you delete them individually in-app, clear the app's storage, or uninstall AUC — at which point they are gone, since no copy exists elsewhere. Text sent during AI fallback is used only to produce that one response; AUC's backend does not persist a searchable log of user queries. Brief, temporary diagnostic logs (e.g. an error code and timestamp) may be visible to the developer through Cloudflare's real-time debugging tools when the AI service itself fails, purely to fix that failure — these are not a permanent record and are not linked to any user identity.</p>
+    </section>
+
+    <section id="security">
+      <div class="sec-head"><span class="sec-num">§</span><h2>Security</h2></div>
+      <p>All network traffic — to AUC's backend and onward to Gemini — is encrypted in transit (HTTPS/TLS). The Gemini API key is stored exclusively as an encrypted secret on AUC's Cloudflare Worker and is never shipped inside the app, logged, or returned in any response.</p>
+    </section>
+
+    <section id="children">
+      <div class="sec-head"><span class="sec-num">§</span><h2>Children's privacy</h2></div>
+      <p>AUC is a general-purpose unit-conversion utility, not directed at children, and does not knowingly collect personal information from children.</p>
+    </section>
+
+    <section id="changes">
+      <div class="sec-head"><span class="sec-num">§</span><h2>Changes to this policy</h2></div>
+      <p>If AUC's architecture changes in a way that affects what data is processed, this page will be updated and its effective date revised accordingly.</p>
+    </section>
+
+    <section id="contact">
+      <div class="sec-head"><span class="sec-num">§</span><h2>Contact</h2></div>
+      <p>Questions about this policy or AUC's data practices can be sent to <a href="mailto:sarayuth939@gmail.com">sarayuth939@gmail.com</a>.</p>
+    </section>
+  </main>
+</div>
+
+<footer>AUC — AI Universal Converter · Privacy Policy · github.com/sarayuth369/auc</footer>

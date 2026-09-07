@@ -10,6 +10,7 @@ import '../about/about_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../history/history_screen.dart';
 import '../settings/settings_screen.dart';
+import 'widgets/banner_ad_widget.dart';
 import 'widgets/result_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -195,6 +196,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+      // A single banner, pinned below the fold. Renders as zero-height when
+      // disabled or failed to load - never overlaps the input/result above,
+      // never appears while AI is loading, never blocks conversion.
+      bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
     );
   }
 }

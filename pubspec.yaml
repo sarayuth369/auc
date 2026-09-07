@@ -41,6 +41,8 @@ dependencies:
   share_plus: ^10.1.4
   # HTTP client for the AI resolver fallback (calls our own Cloudflare Worker only).
   http: ^1.2.0
+  # AdMob banner monetization (test ad unit ID until a production one exists).
+  google_mobile_ads: ^9.1.0
 
 dev_dependencies:
   flutter_test:
