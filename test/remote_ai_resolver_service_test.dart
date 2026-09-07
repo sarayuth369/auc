@@ -27,7 +27,10 @@ void main() {
       );
     });
 
-    final service = RemoteAiResolverService(baseUrl: 'https://example.test', client: client);
+    final service = RemoteAiResolverService(
+      baseUrl: 'https://example.test',
+      client: client,
+    );
     final intent = await service.resolveIntent('10 km to miles');
 
     expect(intent.items, hasLength(1));
@@ -36,50 +39,70 @@ void main() {
     expect(intent.targetUnit, 'mile');
   });
 
-  test('throws ClarificationException for a needs_clarification response', () async {
-    final client = MockClient((request) async {
-      return http.Response(
-        jsonEncode({
-          'success': false,
-          'needs_clarification': true,
-          'question': 'Which region or state does "bigha" refer to?',
-          'unit': 'bigha',
-        }),
-        200,
+  test(
+    'throws ClarificationException for a needs_clarification response',
+    () async {
+      final client = MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'success': false,
+            'needs_clarification': true,
+            'question': 'Which region or state does "bigha" refer to?',
+            'unit': 'bigha',
+          }),
+          200,
+        );
+      });
+
+      final service = RemoteAiResolverService(
+        baseUrl: 'https://example.test',
+        client: client,
       );
-    });
 
-    final service = RemoteAiResolverService(baseUrl: 'https://example.test', client: client);
-
-    await expectLater(
-      () => service.resolveIntent('1 bigha to square meters'),
-      throwsA(isA<ClarificationException>()),
-    );
-  });
-
-  test('throws ConversionException for a generic backend error response', () async {
-    final client = MockClient((request) async {
-      return http.Response(
-        jsonEncode({
-          'success': false,
-          'error': {'code': 'UNSUPPORTED_CONVERSION', 'message': 'Cannot convert energy to power.'},
-        }),
-        422,
+      await expectLater(
+        () => service.resolveIntent('1 bigha to square meters'),
+        throwsA(isA<ClarificationException>()),
       );
-    });
+    },
+  );
 
-    final service = RemoteAiResolverService(baseUrl: 'https://example.test', client: client);
+  test(
+    'throws ConversionException for a generic backend error response',
+    () async {
+      final client = MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'success': false,
+            'error': {
+              'code': 'UNSUPPORTED_CONVERSION',
+              'message': 'Cannot convert energy to power.',
+            },
+          }),
+          422,
+        );
+      });
 
-    await expectLater(
-      () => service.resolveIntent('1 BTU to W'),
-      throwsA(isA<ConversionException>()),
-    );
-  });
+      final service = RemoteAiResolverService(
+        baseUrl: 'https://example.test',
+        client: client,
+      );
+
+      await expectLater(
+        () => service.resolveIntent('1 BTU to W'),
+        throwsA(isA<ConversionException>()),
+      );
+    },
+  );
 
   test('throws ConversionException for malformed JSON', () async {
-    final client = MockClient((request) async => http.Response('not json {', 200));
+    final client = MockClient(
+      (request) async => http.Response('not json {', 200),
+    );
 
-    final service = RemoteAiResolverService(baseUrl: 'https://example.test', client: client);
+    final service = RemoteAiResolverService(
+      baseUrl: 'https://example.test',
+      client: client,
+    );
 
     await expectLater(
       () => service.resolveIntent('anything'),
@@ -88,9 +111,14 @@ void main() {
   });
 
   test('throws ConversionException on a non-JSON error status', () async {
-    final client = MockClient((request) async => http.Response('Internal Server Error', 500));
+    final client = MockClient(
+      (request) async => http.Response('Internal Server Error', 500),
+    );
 
-    final service = RemoteAiResolverService(baseUrl: 'https://example.test', client: client);
+    final service = RemoteAiResolverService(
+      baseUrl: 'https://example.test',
+      client: client,
+    );
 
     await expectLater(
       () => service.resolveIntent('anything'),
@@ -116,14 +144,22 @@ void main() {
     );
   });
 
-  test('throws ConversionException with no message field falls back to a generic one', () async {
-    final client = MockClient((request) async => http.Response(jsonEncode({'weird': true}), 200));
+  test(
+    'throws ConversionException with no message field falls back to a generic one',
+    () async {
+      final client = MockClient(
+        (request) async => http.Response(jsonEncode({'weird': true}), 200),
+      );
 
-    final service = RemoteAiResolverService(baseUrl: 'https://example.test', client: client);
+      final service = RemoteAiResolverService(
+        baseUrl: 'https://example.test',
+        client: client,
+      );
 
-    await expectLater(
-      () => service.resolveIntent('anything'),
-      throwsA(isA<ConversionException>()),
-    );
-  });
+      await expectLater(
+        () => service.resolveIntent('anything'),
+        throwsA(isA<ConversionException>()),
+      );
+    },
+  );
 }

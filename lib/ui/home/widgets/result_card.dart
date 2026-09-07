@@ -6,6 +6,7 @@ import '../../../models/conversion_result.dart';
 
 class ResultCard extends StatelessWidget {
   final ConversionResult? result;
+  final String? displayText;
   final String? errorText;
   final bool isClarification;
   final bool isFavorite;
@@ -14,6 +15,7 @@ class ResultCard extends StatelessWidget {
   const ResultCard({
     super.key,
     this.result,
+    this.displayText,
     this.errorText,
     this.isClarification = false,
     this.isFavorite = false,
@@ -25,8 +27,12 @@ class ResultCard extends StatelessWidget {
     final error = errorText;
     if (error != null) {
       final scheme = Theme.of(context).colorScheme;
-      final background = isClarification ? scheme.tertiaryContainer : scheme.errorContainer;
-      final foreground = isClarification ? scheme.onTertiaryContainer : scheme.onErrorContainer;
+      final background = isClarification
+          ? scheme.tertiaryContainer
+          : scheme.errorContainer;
+      final foreground = isClarification
+          ? scheme.onTertiaryContainer
+          : scheme.onErrorContainer;
       return Card(
         color: background,
         child: Padding(
@@ -48,7 +54,8 @@ class ResultCard extends StatelessWidget {
     }
 
     final r = result;
-    if (r == null) {
+    final text = displayText;
+    if (r == null || text == null) {
       return const SizedBox.shrink();
     }
 
@@ -61,11 +68,10 @@ class ResultCard extends StatelessWidget {
             Text(r.inputText, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 8),
             Text(
-              r.displayText,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              text,
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Row(
@@ -74,7 +80,7 @@ class ResultCard extends StatelessWidget {
                   tooltip: 'Copy',
                   icon: const Icon(Icons.copy),
                   onPressed: () {
-                    Clipboard.setData(ClipboardData(text: r.displayText));
+                    Clipboard.setData(ClipboardData(text: text));
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Copied to clipboard')),
                     );
@@ -84,11 +90,13 @@ class ResultCard extends StatelessWidget {
                   tooltip: 'Share',
                   icon: const Icon(Icons.share),
                   onPressed: () {
-                    Share.share('${r.inputText} = ${r.displayText}');
+                    Share.share('${r.inputText} = $text');
                   },
                 ),
                 IconButton(
-                  tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
+                  tooltip: isFavorite
+                      ? 'Remove from favorites'
+                      : 'Add to favorites',
                   icon: Icon(isFavorite ? Icons.star : Icons.star_border),
                   onPressed: onToggleFavorite,
                 ),

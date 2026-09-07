@@ -13,36 +13,49 @@ import 'services/conversion_service.dart';
 import 'services/favorites_service.dart';
 import 'services/history_service.dart';
 import 'services/remote_ai_resolver_service.dart';
+import 'services/settings_service.dart';
 
 Future<void> main() async {
   // Guards the entire startup sequence: an uncaught error anywhere here
   // (including an async one from ad-SDK init, below) must never take down
   // the whole app before it even gets a chance to show its own error UI.
-  runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-    if (AdConfig.adsEnabled) {
-      unawaited(_initializeAdsSafely());
-    }
+      if (AdConfig.adsEnabled) {
+        unawaited(_initializeAdsSafely());
+      }
 
-    final repository = await UnitRepository.loadFromAssets();
-    final conversionService = ConversionService(
-      aiResolverService: MockAiResolverService(),
-      conversionEngine: ConversionEngine(repository),
-      remoteAiResolverService: RemoteAiResolverService(
-        baseUrl: BackendConfig.baseUrl,
-        timeout: BackendConfig.requestTimeout,
-      ),
-    );
+      final settingsService = SettingsService();
+      final themeModeNotifier = ValueNotifier<ThemeMode>(
+        await settingsService.getThemeMode(),
+      );
 
-    runApp(AucApp(
-      conversionService: conversionService,
-      historyService: HistoryService(),
-      favoritesService: FavoritesService(),
-    ));
-  }, (error, stackTrace) {
-    // Last-resort net: never let a stray error crash the app silently.
-  });
+      final repository = await UnitRepository.loadFromAssets();
+      final conversionService = ConversionService(
+        aiResolverService: MockAiResolverService(),
+        conversionEngine: ConversionEngine(repository),
+        remoteAiResolverService: RemoteAiResolverService(
+          baseUrl: BackendConfig.baseUrl,
+          timeout: BackendConfig.requestTimeout,
+        ),
+      );
+
+      runApp(
+        AucApp(
+          conversionService: conversionService,
+          historyService: HistoryService(),
+          favoritesService: FavoritesService(),
+          settingsService: settingsService,
+          themeModeNotifier: themeModeNotifier,
+        ),
+      );
+    },
+    (error, stackTrace) {
+      // Last-resort net: never let a stray error crash the app silently.
+    },
+  );
 }
 
 /// A slow/missing network, outdated Play Services, or any other ad-SDK

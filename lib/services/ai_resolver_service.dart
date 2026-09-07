@@ -20,7 +20,8 @@ abstract class AiResolverService {
 class MockAiResolverService implements AiResolverService {
   final LocalParser _parser;
 
-  MockAiResolverService({LocalParser? parser}) : _parser = parser ?? LocalParser();
+  MockAiResolverService({LocalParser? parser})
+    : _parser = parser ?? LocalParser();
 
   @override
   Future<AiIntent> resolveIntent(String input) async {

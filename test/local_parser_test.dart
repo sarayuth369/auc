@@ -30,11 +30,17 @@ void main() {
   });
 
   test('throws when "to" is missing', () {
-    expect(() => parser.parse('10 km miles'), throwsA(isA<ConversionException>()));
+    expect(
+      () => parser.parse('10 km miles'),
+      throwsA(isA<ConversionException>()),
+    );
   });
 
   test('throws when no quantity is present', () {
-    expect(() => parser.parse('km to miles'), throwsA(isA<ConversionException>()));
+    expect(
+      () => parser.parse('km to miles'),
+      throwsA(isA<ConversionException>()),
+    );
   });
 
   test('parses Thai script units with "to"', () {

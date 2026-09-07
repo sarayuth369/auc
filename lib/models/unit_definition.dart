@@ -74,7 +74,10 @@ class CategoryDefinition {
     final isSpecial = json['special'] as bool? ?? false;
     final units = (json['units'] as List<dynamic>)
         .cast<Map<String, dynamic>>()
-        .map((u) => UnitDefinition.fromJson(u, categoryId: id, isSpecial: isSpecial))
+        .map(
+          (u) =>
+              UnitDefinition.fromJson(u, categoryId: id, isSpecial: isSpecial),
+        )
         .toList();
     return CategoryDefinition(
       id: id,

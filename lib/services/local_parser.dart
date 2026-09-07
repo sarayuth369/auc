@@ -20,7 +20,10 @@ class LocalParser {
   // English "to" (word boundary) or the Thai connector phrase "เป็นกี่"
   // ("is how many"). Thai script has no \w-based word boundary in Dart's
   // regex engine, so the Thai alternative is matched as a plain literal.
-  static final RegExp _toSplitter = RegExp(r'\bto\b|เป็นกี่', caseSensitive: false);
+  static final RegExp _toSplitter = RegExp(
+    r'\bto\b|เป็นกี่',
+    caseSensitive: false,
+  );
 
   // Unit tokens may be Latin letters, Thai script (U+0E00-U+0E7F), the
   // degree sign, quote marks (for ' / " feet-inches shorthand), or a slash

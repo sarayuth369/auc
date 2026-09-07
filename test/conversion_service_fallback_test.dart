@@ -31,7 +31,9 @@ void main() {
   });
 
   test('local-first: a known input never calls the remote resolver', () async {
-    final remote = _FakeAiResolver((_) async => throw StateError('should not be called'));
+    final remote = _FakeAiResolver(
+      (_) async => throw StateError('should not be called'),
+    );
     final service = ConversionService(
       aiResolverService: MockAiResolverService(),
       conversionEngine: ConversionEngine(repository),
@@ -43,91 +45,108 @@ void main() {
     expect(remote.callCount, 0);
   });
 
-  test('falls back to remote when the local parser cannot understand the input', () async {
-    final remote = _FakeAiResolver(
-      (_) async => const AiIntent(
-        intent: 'convert',
-        items: [ConversionItem(value: 5, unit: 'kilometer')],
-        targetUnit: 'mile',
-      ),
-    );
-    final service = ConversionService(
-      aiResolverService: MockAiResolverService(),
-      conversionEngine: ConversionEngine(repository),
-      remoteAiResolverService: remote,
-    );
+  test(
+    'falls back to remote when the local parser cannot understand the input',
+    () async {
+      final remote = _FakeAiResolver(
+        (_) async => const AiIntent(
+          intent: 'convert',
+          items: [ConversionItem(value: 5, unit: 'kilometer')],
+          targetUnit: 'mile',
+        ),
+      );
+      final service = ConversionService(
+        aiResolverService: MockAiResolverService(),
+        conversionEngine: ConversionEngine(repository),
+        remoteAiResolverService: remote,
+      );
 
-    // Spanish: LocalParser recognizes neither "a" nor any connector here.
-    final result = await service.convert('5 kilómetros a millas');
-    expect(result.unit, 'mi');
-    expect(remote.callCount, 1);
-  });
+      // Spanish: LocalParser recognizes neither "a" nor any connector here.
+      final result = await service.convert('5 kilómetros a millas');
+      expect(result.unit, 'mi');
+      expect(remote.callCount, 1);
+    },
+  );
 
-  test('falls back to remote when the extracted unit is unknown locally', () async {
-    final remote = _FakeAiResolver(
-      (_) async => const AiIntent(
-        intent: 'convert',
-        items: [ConversionItem(value: 1, unit: 'bigha_bihar')],
-        targetUnit: 'square_meter',
-      ),
-    );
-    final service = ConversionService(
-      aiResolverService: MockAiResolverService(),
-      conversionEngine: ConversionEngine(repository),
-      remoteAiResolverService: remote,
-    );
+  test(
+    'falls back to remote when the extracted unit is unknown locally',
+    () async {
+      final remote = _FakeAiResolver(
+        (_) async => const AiIntent(
+          intent: 'convert',
+          items: [ConversionItem(value: 1, unit: 'bigha_bihar')],
+          targetUnit: 'square_meter',
+        ),
+      );
+      final service = ConversionService(
+        aiResolverService: MockAiResolverService(),
+        conversionEngine: ConversionEngine(repository),
+        remoteAiResolverService: remote,
+      );
 
-    // "bigha_bihar" still isn't in the local DB, so this still fails - the
-    // point is proving the remote WAS consulted for an unknown unit.
-    await expectLater(
-      () => service.convert('1 bigha in Bihar to square meters'),
-      throwsA(isA<UnknownUnitException>()),
-    );
-    expect(remote.callCount, 1);
-  });
+      // "bigha_bihar" still isn't in the local DB, so this still fails - the
+      // point is proving the remote WAS consulted for an unknown unit.
+      await expectLater(
+        () => service.convert('1 bigha in Bihar to square meters'),
+        throwsA(isA<UnknownUnitException>()),
+      );
+      expect(remote.callCount, 1);
+    },
+  );
 
-  test('does not fall back for a dimension mismatch (already certain locally)', () async {
-    final remote = _FakeAiResolver((_) async => throw StateError('should not be called'));
-    final service = ConversionService(
-      aiResolverService: MockAiResolverService(),
-      conversionEngine: ConversionEngine(repository),
-      remoteAiResolverService: remote,
-    );
+  test(
+    'does not fall back for a dimension mismatch (already certain locally)',
+    () async {
+      final remote = _FakeAiResolver(
+        (_) async => throw StateError('should not be called'),
+      );
+      final service = ConversionService(
+        aiResolverService: MockAiResolverService(),
+        conversionEngine: ConversionEngine(repository),
+        remoteAiResolverService: remote,
+      );
 
-    await expectLater(
-      () => service.convert('1 BTU to W'),
-      throwsA(isA<ConversionException>()),
-    );
-    expect(remote.callCount, 0);
-  });
+      await expectLater(
+        () => service.convert('1 BTU to W'),
+        throwsA(isA<ConversionException>()),
+      );
+      expect(remote.callCount, 0);
+    },
+  );
 
-  test('surfaces a clarification from the remote resolver as ClarificationException', () async {
-    final remote = _FakeAiResolver(
-      (_) async => throw const ClarificationException(
-        'Which region or state does "bigha" refer to?',
-      ),
-    );
-    final service = ConversionService(
-      aiResolverService: MockAiResolverService(),
-      conversionEngine: ConversionEngine(repository),
-      remoteAiResolverService: remote,
-    );
+  test(
+    'surfaces a clarification from the remote resolver as ClarificationException',
+    () async {
+      final remote = _FakeAiResolver(
+        (_) async => throw const ClarificationException(
+          'Which region or state does "bigha" refer to?',
+        ),
+      );
+      final service = ConversionService(
+        aiResolverService: MockAiResolverService(),
+        conversionEngine: ConversionEngine(repository),
+        remoteAiResolverService: remote,
+      );
 
-    await expectLater(
-      () => service.convert('1 bigha to square meters'),
-      throwsA(isA<ClarificationException>()),
-    );
-  });
+      await expectLater(
+        () => service.convert('1 bigha to square meters'),
+        throwsA(isA<ClarificationException>()),
+      );
+    },
+  );
 
-  test('without a remote resolver configured, local failures propagate unchanged', () async {
-    final service = ConversionService(
-      aiResolverService: MockAiResolverService(),
-      conversionEngine: ConversionEngine(repository),
-    );
+  test(
+    'without a remote resolver configured, local failures propagate unchanged',
+    () async {
+      final service = ConversionService(
+        aiResolverService: MockAiResolverService(),
+        conversionEngine: ConversionEngine(repository),
+      );
 
-    await expectLater(
-      () => service.convert('5 kilómetros a millas'),
-      throwsA(isA<ConversionException>()),
-    );
-  });
+      await expectLater(
+        () => service.convert('5 kilómetros a millas'),
+        throwsA(isA<ConversionException>()),
+      );
+    },
+  );
 }

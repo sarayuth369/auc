@@ -86,7 +86,9 @@ class ConversionEngine {
         celsius = value - 273.15;
         break;
       default:
-        throw ConversionException('Unsupported temperature unit: ${from.canonical}');
+        throw ConversionException(
+          'Unsupported temperature unit: ${from.canonical}',
+        );
     }
 
     switch (to.canonical) {
@@ -97,7 +99,9 @@ class ConversionEngine {
       case 'kelvin':
         return celsius + 273.15;
       default:
-        throw ConversionException('Unsupported temperature unit: ${to.canonical}');
+        throw ConversionException(
+          'Unsupported temperature unit: ${to.canonical}',
+        );
     }
   }
 

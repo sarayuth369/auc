@@ -50,7 +50,9 @@ class RemoteAiResolverService implements AiResolverService {
         'No internet connection. Try a simpler input or check your network.',
       );
     } catch (_) {
-      throw const ConversionException('Could not reach the AI resolver. Try again later.');
+      throw const ConversionException(
+        'Could not reach the AI resolver. Try again later.',
+      );
     }
 
     final Map<String, dynamic> body;
@@ -61,7 +63,9 @@ class RemoteAiResolverService implements AiResolverService {
       }
       body = decoded;
     } catch (_) {
-      throw const ConversionException('The AI resolver returned an unreadable response.');
+      throw const ConversionException(
+        'The AI resolver returned an unreadable response.',
+      );
     }
 
     if (body['success'] == true) {
@@ -82,7 +86,9 @@ class RemoteAiResolverService implements AiResolverService {
       throw ConversionException(error['message'] as String);
     }
 
-    throw const ConversionException('The AI resolver could not understand this input.');
+    throw const ConversionException(
+      'The AI resolver could not understand this input.',
+    );
   }
 
   AiIntent _parseSuccess(Map<String, dynamic> body) {
@@ -90,21 +96,29 @@ class RemoteAiResolverService implements AiResolverService {
     final targetUnit = body['target_unit'];
 
     if (itemsRaw is! List || itemsRaw.isEmpty) {
-      throw const ConversionException('The AI resolver returned no quantities.');
+      throw const ConversionException(
+        'The AI resolver returned no quantities.',
+      );
     }
     if (targetUnit is! String || targetUnit.trim().isEmpty) {
-      throw const ConversionException('The AI resolver returned no target unit.');
+      throw const ConversionException(
+        'The AI resolver returned no target unit.',
+      );
     }
 
     final items = <ConversionItem>[];
     for (final raw in itemsRaw) {
       if (raw is! Map) {
-        throw const ConversionException('The AI resolver returned a malformed item.');
+        throw const ConversionException(
+          'The AI resolver returned a malformed item.',
+        );
       }
       final value = raw['value'];
       final unit = raw['unit'];
       if (value is! num || unit is! String || unit.trim().isEmpty) {
-        throw const ConversionException('The AI resolver returned a malformed item.');
+        throw const ConversionException(
+          'The AI resolver returned a malformed item.',
+        );
       }
       items.add(ConversionItem(value: value.toDouble(), unit: unit));
     }

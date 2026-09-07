@@ -147,13 +147,25 @@ void main() {
   });
 
   group('dimension safety', () {
-    test('BTU -> W is rejected locally as a category mismatch (no network needed)', () async {
-      expect(() => service.convert('1 BTU to W'), throwsA(isA<ConversionException>()));
-    });
+    test(
+      'BTU -> W is rejected locally as a category mismatch (no network needed)',
+      () async {
+        expect(
+          () => service.convert('1 BTU to W'),
+          throwsA(isA<ConversionException>()),
+        );
+      },
+    );
 
-    test('J -> W is rejected locally as a category mismatch (no network needed)', () async {
-      expect(() => service.convert('1 J to W'), throwsA(isA<ConversionException>()));
-    });
+    test(
+      'J -> W is rejected locally as a category mismatch (no network needed)',
+      () async {
+        expect(
+          () => service.convert('1 J to W'),
+          throwsA(isA<ConversionException>()),
+        );
+      },
+    );
   });
 
   group('invalid input', () {
@@ -162,25 +174,40 @@ void main() {
     });
 
     test('missing "to" throws', () async {
-      expect(() => service.convert('10 km miles'), throwsA(isA<ConversionException>()));
+      expect(
+        () => service.convert('10 km miles'),
+        throwsA(isA<ConversionException>()),
+      );
     });
 
     test('no quantity throws', () async {
-      expect(() => service.convert('km to miles'), throwsA(isA<ConversionException>()));
+      expect(
+        () => service.convert('km to miles'),
+        throwsA(isA<ConversionException>()),
+      );
     });
   });
 
   group('unknown unit', () {
     test('unknown target unit throws', () async {
-      expect(() => service.convert('10 km to zzz'), throwsA(isA<ConversionException>()));
+      expect(
+        () => service.convert('10 km to zzz'),
+        throwsA(isA<ConversionException>()),
+      );
     });
 
     test('unknown source unit throws', () async {
-      expect(() => service.convert('10 zzz to km'), throwsA(isA<ConversionException>()));
+      expect(
+        () => service.convert('10 zzz to km'),
+        throwsA(isA<ConversionException>()),
+      );
     });
 
     test('category mismatch throws', () async {
-      expect(() => service.convert('10 kg to km'), throwsA(isA<ConversionException>()));
+      expect(
+        () => service.convert('10 kg to km'),
+        throwsA(isA<ConversionException>()),
+      );
     });
   });
 }

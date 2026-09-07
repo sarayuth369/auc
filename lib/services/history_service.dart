@@ -12,7 +12,8 @@ class HistoryService {
 
   Future<List<SavedConversion>> getAll() => _store.loadAll();
 
-  Future<List<SavedConversion>> add(SavedConversion entry) => _store.addToFront(entry);
+  Future<List<SavedConversion>> add(SavedConversion entry) =>
+      _store.addToFront(entry);
 
   Future<List<SavedConversion>> remove(String id) => _store.remove(id);
 

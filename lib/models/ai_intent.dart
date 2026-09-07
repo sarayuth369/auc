@@ -26,8 +26,8 @@ class AiIntent {
   });
 
   Map<String, dynamic> toJson() => {
-        'intent': intent,
-        'items': items.map((i) => i.toJson()).toList(),
-        'target_unit': targetUnit,
-      };
+    'intent': intent,
+    'items': items.map((i) => i.toJson()).toList(),
+    'target_unit': targetUnit,
+  };
 }

@@ -14,11 +14,11 @@ class SavedConversion {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'inputText': inputText,
-        'resultText': resultText,
-        'timestamp': timestamp.toIso8601String(),
-      };
+    'id': id,
+    'inputText': inputText,
+    'resultText': resultText,
+    'timestamp': timestamp.toIso8601String(),
+  };
 
   factory SavedConversion.fromJson(Map<String, dynamic> json) {
     return SavedConversion(

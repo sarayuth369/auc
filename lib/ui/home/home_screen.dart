@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../domain/conversion_exception.dart';
 import '../../models/conversion_result.dart';
@@ -6,6 +7,8 @@ import '../../models/saved_conversion.dart';
 import '../../services/conversion_service.dart';
 import '../../services/favorites_service.dart';
 import '../../services/history_service.dart';
+import '../../services/result_formatter.dart';
+import '../../services/settings_service.dart';
 import '../about/about_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../history/history_screen.dart';
@@ -17,12 +20,16 @@ class HomeScreen extends StatefulWidget {
   final ConversionService conversionService;
   final HistoryService historyService;
   final FavoritesService favoritesService;
+  final SettingsService settingsService;
+  final ValueNotifier<ThemeMode> themeModeNotifier;
 
   const HomeScreen({
     super.key,
     required this.conversionService,
     required this.historyService,
     required this.favoritesService,
+    required this.settingsService,
+    required this.themeModeNotifier,
   });
 
   @override
@@ -32,6 +39,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _controller = TextEditingController();
   ConversionResult? _result;
+  String? _displayText;
   String? _errorText;
   bool _isClarification = false;
   bool _isFavorite = false;
@@ -55,21 +63,38 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final result = await widget.conversionService.convert(text);
-      final isFav =
-          await widget.favoritesService.isFavorite(result.inputText, result.displayText);
-      await widget.historyService.add(SavedConversion(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        inputText: result.inputText,
-        resultText: result.displayText,
-        timestamp: result.timestamp,
-      ));
+      final decimalPlaces = await widget.settingsService.getDecimalPlaces();
+      final displayText = formatResultDisplay(result, decimalPlaces);
+
+      if (await widget.settingsService.getHapticFeedback()) {
+        await _triggerHapticFeedback();
+      }
+
+      if (await widget.settingsService.getSaveHistory()) {
+        await widget.historyService.add(
+          SavedConversion(
+            id: DateTime.now().microsecondsSinceEpoch.toString(),
+            inputText: result.inputText,
+            resultText: displayText,
+            timestamp: result.timestamp,
+          ),
+        );
+      }
+
+      final isFav = await widget.favoritesService.isFavorite(
+        result.inputText,
+        displayText,
+      );
+
       setState(() {
         _result = result;
+        _displayText = displayText;
         _isFavorite = isFav;
       });
     } on ConversionException catch (e) {
       setState(() {
         _result = null;
+        _displayText = null;
         _errorText = e.message;
         _isClarification = e is ClarificationException;
       });
@@ -78,25 +103,41 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Some devices/environments don't support haptics - never let that
+  /// affect the conversion result itself. A timeout guards against a
+  /// platform channel that never responds at all (not just one that throws).
+  Future<void> _triggerHapticFeedback() async {
+    try {
+      await HapticFeedback.mediumImpact().timeout(
+        const Duration(milliseconds: 500),
+      );
+    } catch (_) {
+      // Ignored.
+    }
+  }
+
   Future<void> _toggleFavorite() async {
     final r = _result;
-    if (r == null) return;
+    final displayText = _displayText;
+    if (r == null || displayText == null) return;
 
     if (_isFavorite) {
       final all = await widget.favoritesService.getAll();
       for (final entry in all) {
-        if (entry.inputText == r.inputText && entry.resultText == r.displayText) {
+        if (entry.inputText == r.inputText && entry.resultText == displayText) {
           await widget.favoritesService.remove(entry.id);
           break;
         }
       }
     } else {
-      await widget.favoritesService.add(SavedConversion(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        inputText: r.inputText,
-        resultText: r.displayText,
-        timestamp: r.timestamp,
-      ));
+      await widget.favoritesService.add(
+        SavedConversion(
+          id: DateTime.now().microsecondsSinceEpoch.toString(),
+          inputText: r.inputText,
+          resultText: displayText,
+          timestamp: r.timestamp,
+        ),
+      );
     }
     setState(() => _isFavorite = !_isFavorite);
   }
@@ -105,6 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _controller.text = entry.inputText;
       _result = null;
+      _displayText = null;
       _errorText = null;
       _isClarification = false;
     });
@@ -120,11 +162,13 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'History',
             icon: const Icon(Icons.history),
             onPressed: () async {
-              final selected = await Navigator.of(context).push<SavedConversion>(
-                MaterialPageRoute(
-                  builder: (_) => HistoryScreen(historyService: widget.historyService),
-                ),
-              );
+              final selected = await Navigator.of(context)
+                  .push<SavedConversion>(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          HistoryScreen(historyService: widget.historyService),
+                    ),
+                  );
               if (selected != null) _applySaved(selected);
             },
           ),
@@ -132,22 +176,34 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'Favorites',
             icon: const Icon(Icons.star),
             onPressed: () async {
-              final selected = await Navigator.of(context).push<SavedConversion>(
-                MaterialPageRoute(
-                  builder: (_) => FavoritesScreen(favoritesService: widget.favoritesService),
-                ),
-              );
+              final selected = await Navigator.of(context)
+                  .push<SavedConversion>(
+                    MaterialPageRoute(
+                      builder: (_) => FavoritesScreen(
+                        favoritesService: widget.favoritesService,
+                      ),
+                    ),
+                  );
               if (selected != null) _applySaved(selected);
             },
           ),
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'settings') {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => SettingsScreen(
+                      settingsService: widget.settingsService,
+                      themeModeNotifier: widget.themeModeNotifier,
+                      historyService: widget.historyService,
+                      favoritesService: widget.favoritesService,
+                    ),
+                  ),
+                );
               } else if (value == 'about') {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (_) => const AboutScreen()));
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const AboutScreen()));
               }
             },
             itemBuilder: (context) => const [
@@ -187,6 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 16),
               ResultCard(
                 result: _result,
+                displayText: _displayText,
                 errorText: _errorText,
                 isClarification: _isClarification,
                 isFavorite: _isFavorite,
