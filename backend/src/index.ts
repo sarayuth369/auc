@@ -1,6 +1,7 @@
 import { buildPublicConfig } from './config';
 import { corsHeaders } from './cors';
 import { errorBody } from './errors';
+import { PRIVACY_POLICY_HTML } from './privacy-policy-html';
 import { checkRateLimit, type RateLimitEntry } from './ratelimit';
 import { resolveConversion, type ResolveEnv } from './resolve';
 
@@ -35,6 +36,16 @@ export default {
     if (url.pathname === '/api/config' && request.method === 'GET') {
       // Public runtime config only - never touches GEMINI_API_KEY.
       return json(buildPublicConfig(env), 200, headers);
+    }
+
+    if (url.pathname === '/privacy-policy' && request.method === 'GET') {
+      // Public, unauthenticated static page - no Cloudflare Access, no
+      // secrets, nothing dynamic. Must be reachable from a plain browser
+      // link (Google Play, About screen) with zero login.
+      return new Response(PRIVACY_POLICY_HTML, {
+        status: 200,
+        headers: { 'Content-Type': 'text/html; charset=UTF-8', ...headers },
+      });
     }
 
     if (url.pathname === '/api/resolve' && request.method === 'POST') {
