@@ -82,4 +82,28 @@ void main() {
     expect(intent.items.first.unit, 'BTU/h');
     expect(intent.targetUnit, 'kW');
   });
+
+  test('parses the Thai connector phrase "เท่ากับกี่" ("equals how many")', () {
+    final intent = parser.parse('1 กิโลกรัม เท่ากับกี่ออนซ์');
+    expect(intent.items, hasLength(1));
+    expect(intent.items.first.value, 1);
+    expect(intent.items.first.unit, 'กิโลกรัม');
+    expect(intent.targetUnit, 'ออนซ์');
+  });
+
+  test('parses the Thai connector phrase "แปลงเป็น" ("convert to")', () {
+    final intent = parser.parse('1 กิโลกรัม แปลงเป็นออนซ์');
+    expect(intent.items, hasLength(1));
+    expect(intent.items.first.value, 1);
+    expect(intent.items.first.unit, 'กิโลกรัม');
+    expect(intent.targetUnit, 'ออนซ์');
+  });
+
+  test('parses the bare Thai connector "กี่" ("how many")', () {
+    final intent = parser.parse('1 กิโลกรัม กี่ออนซ์');
+    expect(intent.items, hasLength(1));
+    expect(intent.items.first.value, 1);
+    expect(intent.items.first.unit, 'กิโลกรัม');
+    expect(intent.targetUnit, 'ออนซ์');
+  });
 }

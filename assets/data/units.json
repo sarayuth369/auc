@@ -6,15 +6,15 @@
       "base_unit": "meter",
       "units": [
         {"canonical": "meter", "symbol": "m", "aliases": ["meter", "meters", "metre", "metres", "m", "เมตร"], "factor": 1.0},
-        {"canonical": "kilometer", "symbol": "km", "aliases": ["kilometer", "kilometers", "kilometre", "kilometres", "km"], "factor": 1000.0},
-        {"canonical": "centimeter", "symbol": "cm", "aliases": ["centimeter", "centimeters", "centimetre", "centimetres", "cm"], "factor": 0.01},
-        {"canonical": "millimeter", "symbol": "mm", "aliases": ["millimeter", "millimeters", "millimetre", "millimetres", "mm"], "factor": 0.001},
+        {"canonical": "kilometer", "symbol": "km", "aliases": ["kilometer", "kilometers", "kilometre", "kilometres", "km", "กิโลเมตร"], "factor": 1000.0},
+        {"canonical": "centimeter", "symbol": "cm", "aliases": ["centimeter", "centimeters", "centimetre", "centimetres", "cm", "เซนติเมตร"], "factor": 0.01},
+        {"canonical": "millimeter", "symbol": "mm", "aliases": ["millimeter", "millimeters", "millimetre", "millimetres", "mm", "มิลลิเมตร"], "factor": 0.001},
         {"canonical": "micrometer", "symbol": "μm", "aliases": ["micrometer", "micrometers", "micrometre", "micrometres", "um", "μm"], "factor": 0.000001, "source": "si"},
         {"canonical": "nanometer", "symbol": "nm", "aliases": ["nanometer", "nanometers", "nanometre", "nanometres", "nm"], "factor": 0.000000001, "source": "si"},
-        {"canonical": "mile", "symbol": "mi", "aliases": ["mile", "miles", "mi"], "factor": 1609.344},
-        {"canonical": "yard", "symbol": "yd", "aliases": ["yard", "yards", "yd"], "factor": 0.9144},
-        {"canonical": "foot", "symbol": "ft", "aliases": ["foot", "feet", "ft"], "factor": 0.3048},
-        {"canonical": "inch", "symbol": "in", "aliases": ["inch", "inches", "in"], "factor": 0.0254},
+        {"canonical": "mile", "symbol": "mi", "aliases": ["mile", "miles", "mi", "ไมล์"], "factor": 1609.344},
+        {"canonical": "yard", "symbol": "yd", "aliases": ["yard", "yards", "yd", "หลา"], "factor": 0.9144},
+        {"canonical": "foot", "symbol": "ft", "aliases": ["foot", "feet", "ft", "ฟุต"], "factor": 0.3048},
+        {"canonical": "inch", "symbol": "in", "aliases": ["inch", "inches", "in", "นิ้ว"], "factor": 0.0254},
         {"canonical": "wa", "symbol": "wa", "aliases": ["wa", "วา"], "factor": 2.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"},
         {"canonical": "sen", "symbol": "sen", "aliases": ["sen", "เส้น"], "factor": 40.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"}
       ]
@@ -39,11 +39,11 @@
       "name": "Weight",
       "base_unit": "kilogram",
       "units": [
-        {"canonical": "kilogram", "symbol": "kg", "aliases": ["kilogram", "kilograms", "kg"], "factor": 1.0},
-        {"canonical": "gram", "symbol": "g", "aliases": ["gram", "grams", "g"], "factor": 0.001},
-        {"canonical": "milligram", "symbol": "mg", "aliases": ["milligram", "milligrams", "mg"], "factor": 0.000001},
-        {"canonical": "pound", "symbol": "lb", "aliases": ["pound", "pounds", "lb", "lbs"], "factor": 0.45359237},
-        {"canonical": "ounce", "symbol": "oz", "aliases": ["ounce", "ounces", "oz"], "factor": 0.028349523125},
+        {"canonical": "kilogram", "symbol": "kg", "aliases": ["kilogram", "kilograms", "kg", "กิโลกรัม", "กิโล", "กก"], "factor": 1.0},
+        {"canonical": "gram", "symbol": "g", "aliases": ["gram", "grams", "g", "กรัม"], "factor": 0.001},
+        {"canonical": "milligram", "symbol": "mg", "aliases": ["milligram", "milligrams", "mg", "มิลลิกรัม"], "factor": 0.000001},
+        {"canonical": "pound", "symbol": "lb", "aliases": ["pound", "pounds", "lb", "lbs", "ปอนด์"], "factor": 0.45359237},
+        {"canonical": "ounce", "symbol": "oz", "aliases": ["ounce", "ounces", "oz", "ออนซ์"], "factor": 0.028349523125},
         {"canonical": "metric_ton", "symbol": "t", "aliases": ["ton", "tons", "tonne", "tonnes", "metric ton", "t"], "factor": 1000.0}
       ]
     },
@@ -52,10 +52,10 @@
       "name": "Volume",
       "base_unit": "liter",
       "units": [
-        {"canonical": "liter", "symbol": "L", "aliases": ["liter", "liters", "litre", "litres", "l"], "factor": 1.0},
-        {"canonical": "milliliter", "symbol": "mL", "aliases": ["milliliter", "milliliters", "millilitre", "millilitres", "ml"], "factor": 0.001},
+        {"canonical": "liter", "symbol": "L", "aliases": ["liter", "liters", "litre", "litres", "l", "ลิตร"], "factor": 1.0},
+        {"canonical": "milliliter", "symbol": "mL", "aliases": ["milliliter", "milliliters", "millilitre", "millilitres", "ml", "มิลลิลิตร"], "factor": 0.001},
         {"canonical": "cubic_meter", "symbol": "m³", "aliases": ["cubic meter", "cubic meters", "cubic metre", "cubic metres", "m3", "m^3"], "factor": 1000.0},
-        {"canonical": "gallon", "symbol": "gal", "aliases": ["gallon", "gallons", "gal"], "factor": 3.785411784},
+        {"canonical": "gallon", "symbol": "gal", "aliases": ["gallon", "gallons", "gal", "แกลลอน"], "factor": 3.785411784},
         {"canonical": "quart", "symbol": "qt", "aliases": ["quart", "quarts", "qt"], "factor": 0.946352946},
         {"canonical": "pint", "symbol": "pt", "aliases": ["pint", "pints", "pt"], "factor": 0.473176473},
         {"canonical": "cup", "symbol": "cup", "aliases": ["cup", "cups"], "factor": 0.2365882365},
@@ -68,8 +68,8 @@
       "base_unit": "celsius",
       "special": true,
       "units": [
-        {"canonical": "celsius", "symbol": "°C", "aliases": ["celsius", "c", "centigrade", "°c"]},
-        {"canonical": "fahrenheit", "symbol": "°F", "aliases": ["fahrenheit", "f", "°f"]},
+        {"canonical": "celsius", "symbol": "°C", "aliases": ["celsius", "c", "centigrade", "°c", "เซลเซียส", "องศาเซลเซียส"]},
+        {"canonical": "fahrenheit", "symbol": "°F", "aliases": ["fahrenheit", "f", "°f", "ฟาเรนไฮต์", "องศาฟาเรนไฮต์"]},
         {"canonical": "kelvin", "symbol": "K", "aliases": ["kelvin", "k"]}
       ]
     },

@@ -54,6 +54,33 @@ void main() {
     test('lb -> kg', () async {
       expect(await convertText('1 lb to kg'), '0.45359 kg');
     });
+
+    test('kg -> oz', () async {
+      expect(await convertText('1 kg to oz'), '35.27396 oz');
+    });
+
+    test('Thai: กิโลกรัม เท่ากับกี่ออนซ์ (equals how many)', () async {
+      expect(
+        await convertText('1 กิโลกรัม เท่ากับกี่ออนซ์'),
+        '35.27396 oz',
+      );
+    });
+
+    test('Thai: กิโลกรัม เป็นกี่ออนซ์ (is how many)', () async {
+      expect(await convertText('1 กิโลกรัม เป็นกี่ออนซ์'), '35.27396 oz');
+    });
+
+    test('Thai: กิโลกรัม แปลงเป็นออนซ์ (convert to)', () async {
+      expect(await convertText('1 กิโลกรัม แปลงเป็นออนซ์'), '35.27396 oz');
+    });
+
+    test('Thai aliases: กิโล, กก, กรัม, มิลลิกรัม, ปอนด์', () async {
+      expect(await convertText('1 กิโล to kg'), '1 kg');
+      expect(await convertText('1 กก to kg'), '1 kg');
+      expect(await convertText('1000 กรัม to kg'), '1 kg');
+      expect(await convertText('1000 มิลลิกรัม to grams'), '1 g');
+      expect(await convertText('1 ปอนด์ to kg'), '0.45359 kg');
+    });
   });
 
   group('temperature', () {
@@ -118,6 +145,32 @@ void main() {
     test('mixed Thai/English input in one sentence', () async {
       expect(await convertText('3 ไร่ 2 ngan to square meters'), '5600 m²');
     });
+
+    test('3 ไร่ 4 งาน เป็นกี่ตารางเมตร -> square meters', () async {
+      expect(await convertText('3 ไร่ 4 งาน เป็นกี่ตารางเมตร'), '6400 m²');
+    });
+
+    test('Thai length aliases: กิโลเมตร, เซนติเมตร, มิลลิเมตร, นิ้ว, ฟุต, หลา, ไมล์', () async {
+      expect(await convertText('1 กิโลเมตร to meters'), '1000 m');
+      expect(await convertText('100 เซนติเมตร to meters'), '1 m');
+      expect(await convertText('1000 มิลลิเมตร to meters'), '1 m');
+      expect(await convertText('1 ฟุต to inches'), '12 in');
+      expect(await convertText('1 นิ้ว to cm'), '2.54 cm');
+      expect(await convertText('1 หลา to feet'), '3 ft');
+      expect(await convertText('1 ไมล์ to km'), '1.60934 km');
+    });
+
+    test('Thai volume aliases: ลิตร, มิลลิลิตร, แกลลอน', () async {
+      expect(await convertText('1 ลิตร to milliliters'), '1000 mL');
+      expect(await convertText('1000 มิลลิลิตร to liters'), '1 L');
+      expect(await convertText('1 แกลลอน to liters'), '3.78541 L');
+    });
+
+    test('Thai temperature aliases: เซลเซียส, องศาเซลเซียส, ฟาเรนไฮต์', () async {
+      expect(await convertText('0 เซลเซียส to F'), '32 °F');
+      expect(await convertText('0 องศาเซลเซียส to fahrenheit'), '32 °F');
+      expect(await convertText('32 ฟาเรนไฮต์ to celsius'), '0 °C');
+    });
   });
 
   group('scientific and engineering units', () {
@@ -166,6 +219,13 @@ void main() {
         );
       },
     );
+
+    test('1 kg to meter must not produce a numeric conversion', () async {
+      expect(
+        () => service.convert('1 kg to meter'),
+        throwsA(isA<ConversionException>()),
+      );
+    });
   });
 
   group('invalid input', () {

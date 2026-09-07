@@ -46,6 +46,37 @@ void main() {
   });
 
   test(
+    'local-first: deterministic Thai and engineering inputs never call the remote resolver',
+    () async {
+      final remote = _FakeAiResolver(
+        (_) async => throw StateError('should not be called'),
+      );
+      final service = ConversionService(
+        aiResolverService: MockAiResolverService(),
+        conversionEngine: ConversionEngine(repository),
+        remoteAiResolverService: remote,
+      );
+
+      final cases = <String, String>{
+        '1 กิโลกรัม เท่ากับกี่ออนซ์': '35.27396 oz',
+        '1 กิโลกรัม เป็นกี่ออนซ์': '35.27396 oz',
+        '1 กิโลกรัม แปลงเป็นออนซ์': '35.27396 oz',
+        '10 km to miles': '6.21371 mi',
+        '100 psi to kPa': '689.47573 kPa',
+        '500 nm to micrometers': '0.5 μm',
+        '3 ไร่ 4 งาน เป็นกี่ตารางเมตร': '6400 m²',
+      };
+
+      for (final entry in cases.entries) {
+        final result = await service.convert(entry.key);
+        expect(result.displayText, entry.value, reason: entry.key);
+      }
+
+      expect(remote.callCount, 0);
+    },
+  );
+
+  test(
     'falls back to remote when the local parser cannot understand the input',
     () async {
       final remote = _FakeAiResolver(

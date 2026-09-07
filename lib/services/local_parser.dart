@@ -11,17 +11,24 @@ import '../models/ai_intent.dart';
 ///   "1 ไร่ to square meters"
 ///   "10 วา เป็นกี่เมตร"
 ///   "3 ไร่ 2 งาน เป็นกี่ตารางเมตร"
+///   "1 กิโลกรัม เท่ากับกี่ออนซ์"
+///   "1 กิโลกรัม แปลงเป็นออนซ์"
+///   "1 กิโลกรัม กี่ออนซ์"
 ///
 /// This never guesses unit meaning - it only extracts numbers and the
 /// literal words around them (Thai script included). Unit resolution
 /// happens later in [UnitRepository]; actual math happens in
 /// [ConversionEngine].
 class LocalParser {
-  // English "to" (word boundary) or the Thai connector phrase "เป็นกี่"
-  // ("is how many"). Thai script has no \w-based word boundary in Dart's
-  // regex engine, so the Thai alternative is matched as a plain literal.
+  // English "to" (word boundary) or a Thai connector phrase: "เป็นกี่"
+  // ("is how many"), "เท่ากับกี่" ("equals how many"), "แปลงเป็น" ("convert
+  // to"), or bare "กี่" ("how many"). Thai script has no \w-based word
+  // boundary in Dart's regex engine, so these are matched as plain literals;
+  // longer/more specific phrases are listed first, though regex's
+  // leftmost-match rule means order only matters for documentation clarity
+  // here (each phrase starts at a distinct position in real input).
   static final RegExp _toSplitter = RegExp(
-    r'\bto\b|เป็นกี่',
+    r'\bto\b|เท่ากับกี่|เป็นกี่|แปลงเป็น|กี่',
     caseSensitive: false,
   );
 
