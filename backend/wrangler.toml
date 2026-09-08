@@ -12,18 +12,18 @@ compatibility_date = "2024-11-01"
 # Worker secret only (wrangler secret put GEMINI_API_KEY).
 #
 # AI_PROVIDER=cloudflare routes through Workers AI (env.AI, bound below) -
-# no API key needed. Live-tested 2026-09-08: @cf/google/gemma-4-26b-a4b-it
-# hallucinated on 2 of 4 real requests (Thai "1 kg to oz" -> "1 acre to
-# square_meter"; Thai "3 rai 4 ngan to sq m" -> "3 hour to minute") - both
-# dimensionally self-consistent, so the dimension guard can't catch them.
-# Keeping AI_PROVIDER=gemini as the live default until Workers AI proves
-# reliable enough for this project's Thai-accuracy bar; CloudflareProvider
-# stays fully wired/tested - flip this var (no redeploy of code) to try it.
+# no API key needed. A prior live test of @cf/google/gemma-4-26b-a4b-it
+# hallucinated on Thai input (domain-swapped, e.g. "3 rai 4 ngan" -> "3 hour
+# to minute") in a way the dimension guard couldn't see because the swapped
+# pair was internally self-consistent; local-unit-tokens.ts now rejects that
+# generically. Currently testing @cf/zai-org/glm-4.7-flash on the real
+# production path. Switch back to AI_PROVIDER=gemini/AI_MODEL=gemini-3.6-flash
+# any time - GeminiProvider is unaffected either way.
 [vars]
 GEMINI_MODEL = "gemini-3.6-flash"
 AI_ENABLED = "true"
-AI_PROVIDER = "gemini"
-AI_MODEL = "gemini-3.6-flash"
+AI_PROVIDER = "cloudflare"
+AI_MODEL = "@cf/zai-org/glm-4.7-flash"
 AI_TIMEOUT_MS = "25000"
 
 # Workers AI binding, created in the Cloudflare dashboard. Grants env.AI.run()

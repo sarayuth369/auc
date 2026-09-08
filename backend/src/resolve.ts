@@ -2,8 +2,10 @@ import { CloudflareAiInvalidResponseError, CloudflareAiRequestError } from './cl
 import { clarificationBody, errorBody } from './errors';
 import { DEFAULT_MODEL, GeminiInvalidResponseError, GeminiRequestError } from './gemini';
 import { findDimensionMismatch } from './dimensions';
+import { hasThaiLocalUnitMismatch } from './local-unit-tokens';
+import { hasFabricatedValue } from './numeric-guard';
 import { getProvider, UnsupportedProviderError } from './provider-registry';
-import { canonicalRegionalUnit, needsRegionClarification } from './regional';
+import { canonicalRegionalUnit, isRegionDependent, needsRegionClarification } from './regional';
 import { validateResolveBody } from './validation';
 import type { ConfigEnv } from './config';
 import type { WorkersAiBinding } from './cloudflare-ai';
@@ -69,7 +71,11 @@ export async function resolveConversion(
     throw err;
   }
 
-  if (raw.needs_clarification) {
+  // The Unit Registry, not the AI's opinion, decides what's actually
+  // region-dependent (regional.ts's small curated list, e.g. "bigha") -
+  // rai/ngan/etc. are nationally fixed and must never be blocked on a
+  // clarification the model occasionally, incorrectly, thinks they need.
+  if (raw.needs_clarification && isRegionDependent(raw.ambiguous_unit ?? raw.items[0]?.unit ?? '')) {
     const unit = raw.ambiguous_unit ?? raw.items[0]?.unit ?? 'unit';
     const question = raw.clarification_question ?? `Which region or standard does "${unit}" use?`;
     return { status: 200, body: clarificationBody(unit, question) };
@@ -79,6 +85,32 @@ export async function resolveConversion(
     return {
       status: 422,
       body: errorBody('INVALID_INPUT', 'Could not extract a conversion from the input.'),
+    };
+  }
+
+  // Catches an AI that silently swapped domains (e.g. "3 rai 4 ngan" ->
+  // "3 hour to minute") - the dimension guard below can't see this because
+  // such a hallucination is often internally self-consistent.
+  if (
+    hasThaiLocalUnitMismatch(
+      validation.text,
+      raw.items.map((item) => item.unit),
+      raw.target_unit,
+    )
+  ) {
+    return {
+      status: 502,
+      body: errorBody('AI_INVALID_RESPONSE', 'The AI resolver misidentified the requested units.'),
+    };
+  }
+
+  // Hard backend enforcement of "the AI never computes the numeric answer":
+  // every extracted value must literally appear in the request, never one
+  // the model derived (e.g. "3 rai 4 ngan" -> a pre-blended "1.333 rai").
+  if (hasFabricatedValue(validation.text, raw.items.map((item) => item.value))) {
+    return {
+      status: 502,
+      body: errorBody('AI_INVALID_RESPONSE', 'The AI resolver returned a value not present in the request.'),
     };
   }
 

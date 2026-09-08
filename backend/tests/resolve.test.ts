@@ -433,6 +433,109 @@ describe('resolveConversion', () => {
     });
   });
 
+  it('28. a domain-swapped hallucination on Thai local units is rejected even though it is internally dimension-consistent', async () => {
+    // Mirrors a real observed failure: "3 rai 4 ngan" (area) misidentified
+    // as "3 hour to minute" (time->time, so findDimensionMismatch alone
+    // would wave it through) - local-unit-tokens.ts must catch this.
+    const fetchImpl = fetchReturning(
+      geminiOk({
+        intent: 'convert',
+        language: 'th',
+        items: [{ value: 3, unit: 'hour' }],
+        target_unit: 'minute',
+      }),
+    );
+    const result = await resolveConversion({ text: '3 ไร่ 4 งาน เป็นกี่ตารางเมตร' }, env, { fetchImpl });
+    expect(result.status).toBe(502);
+    expect(result.body).toMatchObject({ success: false, error: { code: 'AI_INVALID_RESPONSE' } });
+  });
+
+  it('29. a correct Thai local-unit response is not affected by the mismatch guard', async () => {
+    const fetchImpl = fetchReturning(
+      geminiOk({
+        intent: 'convert',
+        language: 'th',
+        items: [
+          { value: 3, unit: 'rai' },
+          { value: 4, unit: 'ngan' },
+        ],
+        target_unit: 'square_meter',
+      }),
+    );
+    const result = await resolveConversion({ text: '3 ไร่ 4 งาน เป็นกี่ตารางเมตร' }, env, { fetchImpl });
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ success: true, target_unit: 'square_meter' });
+  });
+
+  it('30. text with no Thai local-unit tokens is never affected by the mismatch guard', async () => {
+    const fetchImpl = fetchReturning(
+      geminiOk({ intent: 'convert', language: 'en', items: [{ value: 10, unit: 'kilometer' }], target_unit: 'mile' }),
+    );
+    const result = await resolveConversion({ text: '10 km to miles' }, env, { fetchImpl });
+    expect(result.status).toBe(200);
+  });
+
+  it('31. an AI-computed (fabricated) value is rejected even when units/dimensions are correct', async () => {
+    // Real observed failure: "3 rai 4 ngan" (literal 3, 4) came back as a
+    // pre-blended "1.333 rai, 0.667 ngan" - the AI did math it must never do.
+    const fetchImpl = fetchReturning(
+      geminiOk({
+        intent: 'convert',
+        language: 'th',
+        items: [
+          { value: 1.3333333333333333, unit: 'rai' },
+          { value: 0.6666666666666666, unit: 'ngan' },
+        ],
+        target_unit: 'square_meter',
+      }),
+    );
+    const result = await resolveConversion({ text: '3 ไร่ 4 งาน เป็นกี่ตารางเมตร' }, env, { fetchImpl });
+    expect(result.status).toBe(502);
+    expect(result.body).toMatchObject({ success: false, error: { code: 'AI_INVALID_RESPONSE' } });
+  });
+
+  it('32. a duplicated item reusing the input\'s single stated number is rejected', async () => {
+    // Real observed failure: Chinese "1公斤等于多少盎司？" (one literal "1")
+    // came back as two items both claiming value 1.
+    const fetchImpl = fetchReturning(
+      geminiOk({
+        intent: 'convert',
+        language: 'zh',
+        items: [
+          { value: 1, unit: 'kilogram' },
+          { value: 1, unit: 'ounce' },
+        ],
+        target_unit: 'ounce',
+      }),
+    );
+    const result = await resolveConversion({ text: '1公斤等于多少盎司？' }, env, { fetchImpl });
+    expect(result.status).toBe(502);
+    expect(result.body).toMatchObject({ success: false, error: { code: 'AI_INVALID_RESPONSE' } });
+  });
+
+  it('33. the AI incorrectly claiming "rai" needs region clarification is overridden - Unit Registry decides, not the model', async () => {
+    // Real observed behavior: the model occasionally sets
+    // needs_clarification=true for "rai", which regional.ts does NOT treat
+    // as region-dependent (only "bigha" is) - our own registry must win.
+    const fetchImpl = fetchReturning(
+      geminiOk({
+        intent: 'convert',
+        language: 'th',
+        items: [
+          { value: 3, unit: 'rai' },
+          { value: 4, unit: 'ngan' },
+        ],
+        target_unit: 'square_meter',
+        needs_clarification: true,
+        ambiguous_unit: 'rai',
+        clarification_question: 'Which definition of rai?',
+      }),
+    );
+    const result = await resolveConversion({ text: '3 ไร่ 4 งาน เป็นกี่ตารางเมตร' }, env, { fetchImpl });
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ success: true, target_unit: 'square_meter' });
+  });
+
   it('27. Gemini provider still works when AI_PROVIDER is explicitly "gemini"', async () => {
     const fetchImpl = fetchReturning(
       geminiOk({ intent: 'convert', language: 'en', items: [{ value: 10, unit: 'kilometer' }], target_unit: 'mile' }),

@@ -54,11 +54,19 @@ export const INSTRUCTIONS = `You convert one natural-language unit-conversion re
 Never compute the numeric answer yourself - only extract structured data.
 Normalize every unit name (any language) to a lowercase snake_case canonical id,
 e.g. "metre"/"meters"/"メートル" -> "meter", "กิโลเมตร" -> "kilometer".
-If a unit's size depends on country/region (e.g. "bigha") and no region is
-stated, set needs_clarification=true, ambiguous_unit to that unit, and
-clarification_question to a short question asking which region/standard.
-Otherwise set needs_clarification=false. Detect the input's language as an
-ISO 639-1 code. Output JSON only, matching the given schema, no prose.`;
+A unit id must never carry a country/language suffix (e.g. always "kilogram",
+never "kilogram_de" or "kilogram_th") unless the unit's real-world size
+genuinely depends on country/region and no region is stated - only then set
+needs_clarification=true, ambiguous_unit to that unit, and
+clarification_question to a short question asking which region/standard
+(e.g. "bigha"). Otherwise set needs_clarification=false.
+Extract each distinct value+unit pair exactly once - never duplicate an item
+or invent one the input didn't state. Every value you output must be copied
+verbatim from the input - never combine, split, or otherwise compute a new
+number (e.g. for "3 rai 4 ngan", output value 3 for rai and 4 for ngan,
+never a blended figure like 1.33).
+Detect the input's language as an ISO 639-1 code. Output JSON only, matching
+the given schema, no prose.`;
 
 const PROMPT_PREFIX = `${INSTRUCTIONS}\n\nInput: `;
 
