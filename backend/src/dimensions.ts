@@ -51,9 +51,9 @@ const DIMENSION_BY_UNIT: Record<string, string> = {
   fluid_ounce: 'volume', fluid_ounces: 'volume', fl_oz: 'volume',
 
   // temperature
-  c: 'temperature', celsius: 'temperature', centigrade: 'temperature',
-  f: 'temperature', fahrenheit: 'temperature',
-  k: 'temperature', kelvin: 'temperature',
+  c: 'temperature', celsius: 'temperature', centigrade: 'temperature', '°c': 'temperature',
+  f: 'temperature', fahrenheit: 'temperature', '°f': 'temperature',
+  k: 'temperature', kelvin: 'temperature', '°k': 'temperature',
 
   // speed
   'm/s': 'speed', mps: 'speed', meter_per_second: 'speed',

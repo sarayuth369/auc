@@ -2,6 +2,7 @@ import { CloudflareAiInvalidResponseError, CloudflareAiRequestError } from './cl
 import { clarificationBody, errorBody } from './errors';
 import { DEFAULT_MODEL, GeminiInvalidResponseError, GeminiRequestError } from './gemini';
 import { findDimensionMismatch } from './dimensions';
+import { extractSimplePair } from './local-extract';
 import { hasThaiLocalUnitMismatch } from './local-unit-tokens';
 import { hasFabricatedValue } from './numeric-guard';
 import { getProvider, UnsupportedProviderError } from './provider-registry';
@@ -25,6 +26,16 @@ export interface ResolveOutcome {
   body: object;
 }
 
+function dimensionMismatchOutcome(itemUnit: string, itemDimension: string, targetUnit: string, targetDimension: string): ResolveOutcome {
+  return {
+    status: 422,
+    body: errorBody(
+      'UNSUPPORTED_CONVERSION',
+      `Cannot convert "${itemUnit}" (${itemDimension}) to "${targetUnit}" (${targetDimension}): different physical dimensions.`,
+    ),
+  };
+}
+
 /**
  * Full /api/resolve pipeline: validate -> ask Gemini -> validate Gemini's
  * answer -> apply regional/dimensional guards -> return a structured result.
@@ -39,6 +50,25 @@ export async function resolveConversion(
   const validation = validateResolveBody(rawBody);
   if (!validation.ok) {
     return { status: 400, body: errorBody(validation.code, validation.message) };
+  }
+
+  // Deterministic, AI-free short-circuit: for the one phrasing shape simple
+  // enough to classify with certainty - "<one number> <unit> to <unit>" -
+  // a dimension mismatch (e.g. "100 kg to °C") never needs to depend on
+  // model behavior. Never fires for multi-item, non-English-connector, or
+  // otherwise ambiguous input - that still goes through the AI resolver
+  // exactly as before.
+  const localPair = extractSimplePair(validation.text);
+  if (localPair) {
+    const localMismatch = findDimensionMismatch([localPair.sourceUnit], localPair.targetUnit);
+    if (localMismatch) {
+      return dimensionMismatchOutcome(
+        localMismatch.itemUnit,
+        localMismatch.itemDimension,
+        localMismatch.targetUnit,
+        localMismatch.targetDimension,
+      );
+    }
   }
 
   if (env.AI_ENABLED === 'false') {
@@ -128,14 +158,12 @@ export async function resolveConversion(
     raw.target_unit,
   );
   if (mismatch) {
-    return {
-      status: 422,
-      body: errorBody(
-        'UNSUPPORTED_CONVERSION',
-        `Cannot convert "${mismatch.itemUnit}" (${mismatch.itemDimension}) to ` +
-          `"${mismatch.targetUnit}" (${mismatch.targetDimension}): different physical dimensions.`,
-      ),
-    };
+    return dimensionMismatchOutcome(
+      mismatch.itemUnit,
+      mismatch.itemDimension,
+      mismatch.targetUnit,
+      mismatch.targetDimension,
+    );
   }
 
   const items = raw.items.map((item) => ({

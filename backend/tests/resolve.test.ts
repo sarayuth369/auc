@@ -536,6 +536,83 @@ describe('resolveConversion', () => {
     expect(result.body).toMatchObject({ success: true, target_unit: 'square_meter' });
   });
 
+  describe('deterministic pre-AI dimension guard (extractSimplePair)', () => {
+    it('34. "100 kg to °C" is rejected without ever calling the AI resolver', async () => {
+      const fetchImpl = fetchThrowing('AI must not be called for a deterministic dimension mismatch');
+      const result = await resolveConversion({ text: '100 kg to °C' }, env, { fetchImpl });
+      expect(result.status).toBe(422);
+      expect(result.body).toMatchObject({ success: false, error: { code: 'UNSUPPORTED_CONVERSION' } });
+    });
+
+    it('35. "10 meter to kilogram" is rejected deterministically (length vs weight)', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      const result = await resolveConversion({ text: '10 meter to kilogram' }, env, { fetchImpl });
+      expect(result.status).toBe(422);
+      expect(result.body).toMatchObject({ success: false, error: { code: 'UNSUPPORTED_CONVERSION' } });
+    });
+
+    it('36. "1 liter to celsius" is rejected deterministically (volume vs temperature)', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      const result = await resolveConversion({ text: '1 liter to celsius' }, env, { fetchImpl });
+      expect(result.status).toBe(422);
+      expect(result.body).toMatchObject({ success: false, error: { code: 'UNSUPPORTED_CONVERSION' } });
+    });
+
+    it('37. "1 kg to square meters" is rejected deterministically (weight vs area)', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      const result = await resolveConversion({ text: '1 kg to square meters' }, env, { fetchImpl });
+      expect(result.status).toBe(422);
+      expect(result.body).toMatchObject({ success: false, error: { code: 'UNSUPPORTED_CONVERSION' } });
+    });
+
+    it('38. "10 seconds to kilograms" is rejected deterministically (time vs weight)', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      const result = await resolveConversion({ text: '10 seconds to kilograms' }, env, { fetchImpl });
+      expect(result.status).toBe(422);
+      expect(result.body).toMatchObject({ success: false, error: { code: 'UNSUPPORTED_CONVERSION' } });
+    });
+
+    it('39. "1 bigha to square meters" is NOT short-circuited (same dimension) - still goes to AI for clarification', async () => {
+      const fetchImpl = fetchReturning(
+        geminiOk({
+          intent: 'convert',
+          language: 'en',
+          items: [{ value: 1, unit: 'bigha' }],
+          target_unit: 'square_meter',
+        }),
+      );
+      const result = await resolveConversion({ text: '1 bigha to square meters' }, env, { fetchImpl });
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: false, needs_clarification: true, unit: 'bigha' });
+    });
+
+    it('40. same-dimension simple pairs ("10 km to miles") still resolve normally via AI', async () => {
+      const fetchImpl = fetchReturning(
+        geminiOk({ intent: 'convert', language: 'en', items: [{ value: 10, unit: 'kilometer' }], target_unit: 'mile' }),
+      );
+      const result = await resolveConversion({ text: '10 km to miles' }, env, { fetchImpl });
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: true, target_unit: 'mile' });
+    });
+
+    it('41. multi-item input ("5 feet 8 inches to cm") is never short-circuited', async () => {
+      const fetchImpl = fetchReturning(
+        geminiOk({
+          intent: 'convert',
+          language: 'en',
+          items: [
+            { value: 5, unit: 'foot' },
+            { value: 8, unit: 'inch' },
+          ],
+          target_unit: 'centimeter',
+        }),
+      );
+      const result = await resolveConversion({ text: '5 feet 8 inches to cm' }, env, { fetchImpl });
+      expect(result.status).toBe(200);
+      expect((result.body as { items: unknown[] }).items).toHaveLength(2);
+    });
+  });
+
   it('27. Gemini provider still works when AI_PROVIDER is explicitly "gemini"', async () => {
     const fetchImpl = fetchReturning(
       geminiOk({ intent: 'convert', language: 'en', items: [{ value: 10, unit: 'kilometer' }], target_unit: 'mile' }),
