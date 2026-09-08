@@ -1,9 +1,8 @@
 """One-off script: derive an Android-adaptive-icon-safe foreground from the
 provided SmartConverter/AUC artwork, WITHOUT altering the artwork itself -
-only uniform scale + transparent padding so nothing (the AUC wordmark, the
-globe, or the corner unit-symbol chips) gets clipped by a circular/squircle
-launcher mask. The legacy launcher icon continues to use the original file
-untouched, full-bleed.
+only uniform scale + transparent padding so nothing gets clipped by a
+circular/squircle launcher mask. The legacy launcher icon continues to use
+the original file untouched, full-bleed.
 """
 from PIL import Image
 
