@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/privacy_config.dart';
+import '../../services/billing_service.dart';
+import '../../services/entitlement_service.dart';
 import '../../services/favorites_service.dart';
 import '../../services/history_service.dart';
 import '../../services/settings_service.dart';
 import '../about/about_screen.dart';
+import '../premium/premium_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final SettingsService settingsService;
@@ -13,12 +16,19 @@ class SettingsScreen extends StatefulWidget {
   final HistoryService historyService;
   final FavoritesService favoritesService;
 
+  /// Nullable so existing call sites (tests included) don't need to change;
+  /// a fresh default is created internally when omitted.
+  final EntitlementService? entitlementService;
+  final BillingService? billingService;
+
   const SettingsScreen({
     super.key,
     required this.settingsService,
     required this.themeModeNotifier,
     required this.historyService,
     required this.favoritesService,
+    this.entitlementService,
+    this.billingService,
   });
 
   @override
@@ -228,6 +238,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               leading: const Icon(Icons.privacy_tip_outlined),
               title: const Text('Privacy Policy'),
               onTap: _openPrivacyPolicy,
+            ),
+            const Divider(),
+            const _SectionHeader('Premium'),
+            ListTile(
+              leading: const Icon(Icons.workspace_premium_outlined),
+              title: const Text('SmartConverter Premium'),
+              subtitle: const Text('Remove ads, unlock future features'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PremiumScreen(
+                    entitlementService: widget.entitlementService ?? EntitlementService(),
+                    billingService: widget.billingService ?? UnavailableBillingService(),
+                  ),
+                ),
+              ),
             ),
             const Divider(),
             const _SectionHeader('About'),

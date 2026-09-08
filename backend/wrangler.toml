@@ -34,3 +34,15 @@ binding = "AI"
 
 [observability]
 enabled = true
+
+# Premium subscription foundation (see src/billing.ts) - documentation only,
+# nothing below is active yet. /api/billing/verify and /api/billing/rtdn
+# currently return honest "not implemented" responses; no credentials
+# exist, none are committed, and none should ever be until a real Google
+# Play Console + service account setup exists. When that happens, the
+# ONLY place these belong is Worker secrets (never a [vars] entry, never
+# committed, never returned by /api/config):
+#   wrangler secret put GOOGLE_PLAY_SERVICE_ACCOUNT_JSON
+#   wrangler secret put GOOGLE_PLAY_PACKAGE_NAME
+# (package name isn't strictly secret, but keeping it alongside the service
+# account credential avoids a second config surface for one small feature.)

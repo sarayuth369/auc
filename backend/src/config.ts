@@ -11,6 +11,18 @@ export interface PublicAiConfig {
   timeoutMs: number;
 }
 
+/**
+ * Public, non-secret billing info only - never a credential, never a price
+ * (Google Play Console owns pricing). `enabled: false` until a real Play
+ * Billing + backend verification integration exists (see billing.ts).
+ */
+export interface PublicBillingConfig {
+  enabled: boolean;
+  premiumProductId: string;
+}
+
+const PREMIUM_PRODUCT_ID = 'smartconverter_premium_monthly';
+
 export interface ConfigEnv {
   AI_ENABLED?: string;
   AI_PROVIDER?: string;
@@ -36,7 +48,7 @@ const DEFAULT_TIMEOUT_MS = 25000;
 export function buildPublicConfig(
   env: ConfigEnv,
   country?: string | null,
-): { configVersion: number; ai: PublicAiConfig; ui: UiConfig } {
+): { configVersion: number; ai: PublicAiConfig; ui: UiConfig; billing: PublicBillingConfig } {
   const timeoutMs = Number(env.AI_TIMEOUT_MS);
   return {
     configVersion: CONFIG_VERSION,
@@ -47,5 +59,6 @@ export function buildPublicConfig(
       timeoutMs: Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : DEFAULT_TIMEOUT_MS,
     },
     ui: resolveUiConfig(country),
+    billing: { enabled: false, premiumProductId: PREMIUM_PRODUCT_ID },
   };
 }

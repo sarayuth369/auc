@@ -5,7 +5,8 @@ export type ErrorCode =
   | 'AI_INVALID_RESPONSE'
   | 'RATE_LIMITED'
   | 'NEEDS_CLARIFICATION'
-  | 'UNSUPPORTED_CONVERSION';
+  | 'UNSUPPORTED_CONVERSION'
+  | 'NOT_IMPLEMENTED';
 
 export interface ErrorBody {
   success: false;

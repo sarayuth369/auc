@@ -8,6 +8,25 @@ describe('buildPublicConfig', () => {
       configVersion: CONFIG_VERSION,
       ai: { enabled: true, provider: 'gemini', model: 'gemini-3.6-flash', timeoutMs: 25000 },
       ui: { language: 'en', country: null, placeholder: 'What do you want to convert?', translationVersion: 1 },
+      billing: { enabled: false, premiumProductId: 'smartconverter_premium_monthly' },
+    });
+  });
+
+  describe('billing (Premium foundation - not active yet)', () => {
+    it('is disabled and exposes only the public product ID, no secret', () => {
+      const config = buildPublicConfig({});
+      expect(config.billing).toEqual({
+        enabled: false,
+        premiumProductId: 'smartconverter_premium_monthly',
+      });
+    });
+
+    it('never includes a Google/service-account-shaped field', () => {
+      const serialized = JSON.stringify(buildPublicConfig({}).billing);
+      expect(serialized).not.toMatch(/service.?account/i);
+      expect(serialized).not.toMatch(/credential/i);
+      expect(serialized).not.toMatch(/key/i);
+      expect(serialized).not.toMatch(/secret/i);
     });
   });
 

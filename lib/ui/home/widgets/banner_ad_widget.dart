@@ -7,9 +7,13 @@ import '../../../config/ad_config.dart';
 ///
 /// Ad failure (no network, no fill, SDK not ready, etc.) never throws past
 /// this widget and never affects conversion - it just renders empty space,
-/// same as when [AdConfig.adsEnabled] is false.
+/// same as when [AdConfig.adsEnabled] is false or [premiumActive] is true.
 class BannerAdWidget extends StatefulWidget {
-  const BannerAdWidget({super.key});
+  /// Centralized Premium -> no-ads decision (see `Entitlement.isPremium`).
+  /// Defaults to false so existing call sites are unaffected.
+  final bool premiumActive;
+
+  const BannerAdWidget({super.key, this.premiumActive = false});
 
   @override
   State<BannerAdWidget> createState() => _BannerAdWidgetState();
@@ -21,7 +25,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   @override
   void initState() {
     super.initState();
-    if (AdConfig.adsEnabled) {
+    if (AdConfig.adsEnabled && !widget.premiumActive) {
       _loadBanner();
     }
   }

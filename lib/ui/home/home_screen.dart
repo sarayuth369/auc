@@ -5,7 +5,9 @@ import '../../domain/conversion_exception.dart';
 import '../../l10n/home_placeholder.dart';
 import '../../models/conversion_result.dart';
 import '../../models/saved_conversion.dart';
+import '../../services/billing_service.dart';
 import '../../services/conversion_service.dart';
+import '../../services/entitlement_service.dart';
 import '../../services/favorites_service.dart';
 import '../../services/history_service.dart';
 import '../../services/result_formatter.dart';
@@ -29,6 +31,11 @@ class HomeScreen extends StatefulWidget {
   /// loading spinner or blank label while this is being decided.
   final String convertPlaceholder;
 
+  /// Nullable so existing call sites (tests included) don't need to change;
+  /// a fresh default is created internally when omitted.
+  final EntitlementService? entitlementService;
+  final BillingService? billingService;
+
   const HomeScreen({
     super.key,
     required this.conversionService,
@@ -37,6 +44,8 @@ class HomeScreen extends StatefulWidget {
     required this.settingsService,
     required this.themeModeNotifier,
     this.convertPlaceholder = kDefaultConvertPlaceholder,
+    this.entitlementService,
+    this.billingService,
   });
 
   @override
@@ -51,6 +60,23 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isClarification = false;
   bool _isFavorite = false;
   bool _isConverting = false;
+  late final EntitlementService _entitlementService =
+      widget.entitlementService ?? EntitlementService();
+  late final BillingService _billingService =
+      widget.billingService ?? UnavailableBillingService();
+  bool _isPremium = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEntitlement();
+  }
+
+  Future<void> _loadEntitlement() async {
+    final entitlement = await _entitlementService.getCached();
+    if (!mounted) return;
+    setState(() => _isPremium = entitlement.isPremium);
+  }
 
   @override
   void dispose() {
@@ -204,6 +230,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       themeModeNotifier: widget.themeModeNotifier,
                       historyService: widget.historyService,
                       favoritesService: widget.favoritesService,
+                      entitlementService: _entitlementService,
+                      billingService: _billingService,
                     ),
                   ),
                 );
@@ -263,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // A single banner, pinned below the fold. Renders as zero-height when
       // disabled or failed to load - never overlaps the input/result above,
       // never appears while AI is loading, never blocks conversion.
-      bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
+      bottomNavigationBar: SafeArea(child: BannerAdWidget(premiumActive: _isPremium)),
     );
   }
 }

@@ -1,3 +1,4 @@
+import { classifyRtdn, decodeRtdnPayload, FREE_ENTITLEMENT } from './billing';
 import { buildPublicConfig } from './config';
 import { corsHeaders } from './cors';
 import { errorBody } from './errors';
@@ -48,6 +49,48 @@ export default {
         status: 200,
         headers: { 'Content-Type': 'text/html; charset=UTF-8', ...headers },
       });
+    }
+
+    if (url.pathname === '/api/billing/entitlement' && request.method === 'GET') {
+      // Foundation only: no persistent entitlement store exists yet, so the
+      // only honest answer is "free" - never fabricate a premium grant.
+      // Wiring this to real state requires a purchase-token-keyed store
+      // populated by a verified /api/billing/verify or RTDN call.
+      return json(FREE_ENTITLEMENT, 200, headers);
+    }
+
+    if (url.pathname === '/api/billing/verify' && request.method === 'POST') {
+      // Foundation only: verifying a purchase token requires calling the
+      // Google Play Developer API (subscriptionsv2.get) with a service
+      // account (GOOGLE_PLAY_SERVICE_ACCOUNT_JSON, a future Worker secret -
+      // never committed, never returned here). No insecure fake
+      // verification is implemented - this is an honest "not implemented."
+      return json(
+        errorBody('NOT_IMPLEMENTED', 'Purchase verification is not implemented yet.'),
+        501,
+        headers,
+      );
+    }
+
+    if (url.pathname === '/api/billing/rtdn' && request.method === 'POST') {
+      // Google requires a fast 2xx ack regardless of whether we can fully
+      // process the notification yet - a non-2xx makes Pub/Sub retry
+      // indefinitely. RTDN is only ever a "something changed" signal; the
+      // real implementation must still call the Play Developer API for the
+      // authoritative state before updating any stored entitlement.
+      let envelope: unknown;
+      try {
+        envelope = await request.json();
+      } catch {
+        return json({ ok: true }, 200, headers);
+      }
+      const payload = decodeRtdnPayload(envelope);
+      if (payload) {
+        const eventType = classifyRtdn(payload);
+        // Not yet wired to a verifier/store - see module doc in billing.ts.
+        console.log('RTDN received (not yet processed):', eventType ?? 'unknown');
+      }
+      return json({ ok: true }, 200, headers);
     }
 
     if (url.pathname === '/api/resolve' && request.method === 'POST') {
