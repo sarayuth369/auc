@@ -536,6 +536,64 @@ describe('resolveConversion', () => {
     expect(result.body).toMatchObject({ success: true, target_unit: 'square_meter' });
   });
 
+  describe('global unit intelligence (Tier 2: AI-identified units the Worker has no curated definition for)', () => {
+    // These prove the architecture stays generic: the Worker never needs a
+    // hard-coded list of every country's units - it validates whatever
+    // canonical unit AI identifies (dimension, numeric fidelity, region
+    // safety) and passes it through unresolved. Actual unit *definitions*
+    // are Flutter's Unit Registry's job, not this Worker's.
+
+    it('Korea: "3 pyeong to square meters" - an AI-identified unit with no local dimension entry passes through untouched', async () => {
+      const fetchImpl = fetchReturning(
+        geminiOk({ intent: 'convert', language: 'en', items: [{ value: 3, unit: 'pyeong' }], target_unit: 'square_meter' }),
+      );
+      const result = await resolveConversion({ text: '3 pyeong to square meters' }, env, { fetchImpl });
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: true, items: [{ value: 3, unit: 'pyeong' }], target_unit: 'square_meter' });
+    });
+
+    it('Japan: "2 tsubo to square meters" resolves the same way', async () => {
+      const fetchImpl = fetchReturning(
+        geminiOk({ intent: 'convert', language: 'en', items: [{ value: 2, unit: 'tsubo' }], target_unit: 'square_meter' }),
+      );
+      const result = await resolveConversion({ text: '2 tsubo to square meters' }, env, { fetchImpl });
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: true, items: [{ value: 2, unit: 'tsubo' }] });
+    });
+
+    it('China: "10 jin to kg" resolves the same way', async () => {
+      const fetchImpl = fetchReturning(
+        geminiOk({ intent: 'convert', language: 'en', items: [{ value: 10, unit: 'jin' }], target_unit: 'kilogram' }),
+      );
+      const result = await resolveConversion({ text: '10 jin to kg' }, env, { fetchImpl });
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: true, items: [{ value: 10, unit: 'jin' }] });
+    });
+
+    it('India: "5 bigha in Bihar to square meters" - region-qualified regional unit is tagged, not fabricated', async () => {
+      const fetchImpl = fetchReturning(
+        geminiOk({
+          intent: 'convert',
+          language: 'en',
+          items: [{ value: 5, unit: 'bigha', region: 'Bihar' }],
+          target_unit: 'square_meter',
+        }),
+      );
+      const result = await resolveConversion({ text: '5 bigha in Bihar to square meters' }, env, { fetchImpl });
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: true, items: [{ value: 5, unit: 'bigha_bihar' }] });
+    });
+
+    it('an AI-fabricated value for an unknown global unit is still rejected (numeric guard applies regardless of unit familiarity)', async () => {
+      const fetchImpl = fetchReturning(
+        geminiOk({ intent: 'convert', language: 'en', items: [{ value: 999, unit: 'pyeong' }], target_unit: 'square_meter' }),
+      );
+      const result = await resolveConversion({ text: '3 pyeong to square meters' }, env, { fetchImpl });
+      expect(result.status).toBe(502);
+      expect(result.body).toMatchObject({ success: false, error: { code: 'AI_INVALID_RESPONSE' } });
+    });
+  });
+
   describe('deterministic pre-AI dimension guard (extractSimplePair)', () => {
     it('34. "100 kg to °C" is rejected without ever calling the AI resolver', async () => {
       const fetchImpl = fetchThrowing('AI must not be called for a deterministic dimension mismatch');

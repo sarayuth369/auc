@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'l10n/home_placeholder.dart';
 import 'services/conversion_service.dart';
 import 'services/favorites_service.dart';
 import 'services/history_service.dart';
@@ -12,6 +13,7 @@ class AucApp extends StatelessWidget {
   final FavoritesService favoritesService;
   final SettingsService settingsService;
   final ValueNotifier<ThemeMode> themeModeNotifier;
+  final String convertPlaceholder;
 
   const AucApp({
     super.key,
@@ -20,6 +22,7 @@ class AucApp extends StatelessWidget {
     required this.favoritesService,
     required this.settingsService,
     required this.themeModeNotifier,
+    this.convertPlaceholder = kDefaultConvertPlaceholder,
   });
 
   @override
@@ -47,6 +50,7 @@ class AucApp extends StatelessWidget {
             favoritesService: favoritesService,
             settingsService: settingsService,
             themeModeNotifier: themeModeNotifier,
+            convertPlaceholder: convertPlaceholder,
           ),
         );
       },

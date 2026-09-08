@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../domain/conversion_exception.dart';
+import '../../l10n/home_placeholder.dart';
 import '../../models/conversion_result.dart';
 import '../../models/saved_conversion.dart';
 import '../../services/conversion_service.dart';
@@ -23,6 +24,11 @@ class HomeScreen extends StatefulWidget {
   final SettingsService settingsService;
   final ValueNotifier<ThemeMode> themeModeNotifier;
 
+  /// Resolved once at app startup (device locale, or a cached server hint -
+  /// see main.dart) - never null, never awaited here, so Home never shows a
+  /// loading spinner or blank label while this is being decided.
+  final String convertPlaceholder;
+
   const HomeScreen({
     super.key,
     required this.conversionService,
@@ -30,6 +36,7 @@ class HomeScreen extends StatefulWidget {
     required this.favoritesService,
     required this.settingsService,
     required this.themeModeNotifier,
+    this.convertPlaceholder = kDefaultConvertPlaceholder,
   });
 
   @override
@@ -223,10 +230,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 controller: _controller,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _convert(),
-                decoration: const InputDecoration(
-                  labelText: 'What do you want to convert?',
+                decoration: InputDecoration(
+                  labelText: widget.convertPlaceholder,
                   hintText: 'e.g. 10 km to miles',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),

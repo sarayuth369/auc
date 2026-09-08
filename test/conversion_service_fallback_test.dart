@@ -121,6 +121,33 @@ void main() {
     },
   );
 
+  test(
+    'local-first: global units with a single authoritative standard (pyeong/tsubo, jin) resolve without AI',
+    () async {
+      final remote = _FakeAiResolver(
+        (_) async => throw StateError('should not be called'),
+      );
+      final service = ConversionService(
+        aiResolverService: MockAiResolverService(),
+        conversionEngine: ConversionEngine(repository),
+        remoteAiResolverService: remote,
+      );
+
+      final cases = <String, String>{
+        '3 pyeong to square meters': '9.91736 m²',
+        '2 tsubo to square meters': '6.61157 m²',
+        '10 jin to kg': '5 kg',
+      };
+
+      for (final entry in cases.entries) {
+        final result = await service.convert(entry.key);
+        expect(result.displayText, entry.value, reason: entry.key);
+      }
+
+      expect(remote.callCount, 0);
+    },
+  );
+
   test('alias-collision safety: new short Thai aliases resolve to the right unit, existing ones are unaffected', () async {
     final repo = repository;
     expect(repo.resolve('เซน')!.canonical, 'centimeter');

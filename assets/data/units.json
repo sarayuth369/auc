@@ -32,7 +32,8 @@
         {"canonical": "hectare", "symbol": "ha", "aliases": ["hectare", "hectares", "ha"], "factor": 10000.0},
         {"canonical": "rai", "symbol": "rai", "aliases": ["rai", "ไร่"], "factor": 1600.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"},
         {"canonical": "ngan", "symbol": "ngan", "aliases": ["ngan", "งาน"], "factor": 400.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"},
-        {"canonical": "square_wah", "symbol": "wah²", "aliases": ["square wah", "wah", "sqwah", "square wa", "ตารางวา"], "factor": 4.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"}
+        {"canonical": "square_wah", "symbol": "wah²", "aliases": ["square wah", "wah", "sqwah", "square wa", "ตารางวา"], "factor": 4.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"},
+        {"canonical": "pyeong", "symbol": "pyeong", "aliases": ["pyeong", "pyeongs", "평", "tsubo", "tsubos", "坪"], "factor": 3.305785123966942, "source": "kr_jp_standard"}
       ]
     },
     {
@@ -41,6 +42,7 @@
       "base_unit": "kilogram",
       "units": [
         {"canonical": "kilogram", "symbol": "kg", "aliases": ["kilogram", "kilograms", "kg", "กิโลกรัม", "กิโล", "กก"], "factor": 1.0},
+        {"canonical": "jin", "symbol": "jin", "aliases": ["jin", "斤", "catty"], "factor": 0.5, "language": "zh", "country": "CN", "source": "cn_standard_catty"},
         {"canonical": "gram", "symbol": "g", "aliases": ["gram", "grams", "g", "กรัม"], "factor": 0.001},
         {"canonical": "milligram", "symbol": "mg", "aliases": ["milligram", "milligrams", "mg", "มิลลิกรัม"], "factor": 0.000001},
         {"canonical": "pound", "symbol": "lb", "aliases": ["pound", "pounds", "lb", "lbs", "ปอนด์"], "factor": 0.45359237},

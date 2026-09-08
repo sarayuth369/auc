@@ -116,6 +116,128 @@ void main() {
     },
   );
 
+  group('getCachedUi (Home placeholder localization)', () {
+    test('returns defaults (no placeholder hint) when nothing is cached', () async {
+      final service = AiConfigService(baseUrl: 'https://example.test');
+      final ui = await service.getCachedUi();
+      expect(ui.language, 'en');
+      expect(ui.placeholder, isNull);
+    });
+
+    test('first refresh() obtains and caches the ui block from the same /api/config response', () async {
+      var requestCount = 0;
+      final client = MockClient((request) async {
+        requestCount++;
+        return http.Response(
+          '{"configVersion":1,"ai":{"enabled":true,"provider":"cloudflare","model":"@cf/zai-org/glm-4.7-flash","timeoutMs":25000},'
+          '"ui":{"language":"th","country":"TH","placeholder":"คุณต้องการแปลงอะไร?","translationVersion":1}}',
+          200,
+          // http.Response defaults to latin1 for its .body getter unless the
+          // charset is explicit - without this, the Thai text below gets
+          // mis-decoded and jsonDecode() throws (silently swallowed by
+          // refresh()'s catch, leaving the cache unchanged - a real gotcha,
+          // not an AiConfigService bug).
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      });
+      final service = AiConfigService(baseUrl: 'https://example.test', client: client);
+
+      await service.refresh();
+      final ui = await service.getCachedUi();
+
+      expect(ui.language, 'th');
+      expect(ui.country, 'TH');
+      expect(ui.placeholder, 'คุณต้องการแปลงอะไร?');
+      expect(ui.translationVersion, 1);
+      // One HTTP call served both the ai config AND the ui hint - no
+      // separate translation request was made.
+      expect(requestCount, 1);
+    });
+
+    test('a second app start (no refresh) reuses the cached ui block - no new request', () async {
+      final client = MockClient((request) async => http.Response(
+        '{"configVersion":1,"ai":{"enabled":true,"provider":"gemini","model":"gemini-3.6-flash","timeoutMs":25000},'
+        '"ui":{"language":"ja","country":"JP","placeholder":"何を変換しますか？","translationVersion":1}}',
+        200,
+        headers: {'content-type': 'application/json; charset=utf-8'},
+      ));
+      final firstLaunch = AiConfigService(baseUrl: 'https://example.test', client: client);
+      await firstLaunch.refresh();
+
+      // A brand new service instance, same underlying SharedPreferences
+      // store - simulates a fresh app start reading yesterday's cache.
+      final secondLaunch = AiConfigService(
+        baseUrl: 'https://example.test',
+        client: MockClient((request) async => throw StateError('should not be called')),
+      );
+      final ui = await secondLaunch.getCachedUi();
+      expect(ui.language, 'ja');
+      expect(ui.placeholder, '何を変換しますか？');
+    });
+
+    test('a language/config change on the next refresh() replaces the cached ui block', () async {
+      var response =
+          '{"configVersion":1,"ai":{"enabled":true,"provider":"gemini","model":"gemini-3.6-flash","timeoutMs":25000},'
+          '"ui":{"language":"en","country":null,"placeholder":"What do you want to convert?","translationVersion":1}}';
+      final client = MockClient(
+        (request) async => http.Response(
+          response,
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        ),
+      );
+      final service = AiConfigService(baseUrl: 'https://example.test', client: client);
+
+      await service.refresh();
+      expect((await service.getCachedUi()).language, 'en');
+
+      response =
+          '{"configVersion":1,"ai":{"enabled":true,"provider":"gemini","model":"gemini-3.6-flash","timeoutMs":25000},'
+          '"ui":{"language":"vi","country":"VN","placeholder":"Bạn muốn chuyển đổi gì?","translationVersion":2}}';
+      await service.refresh();
+
+      final updated = await service.getCachedUi();
+      expect(updated.language, 'vi');
+      expect(updated.placeholder, 'Bạn muốn chuyển đổi gì?');
+      expect(updated.translationVersion, 2);
+    });
+
+    test('malformed or missing ui block never throws and falls back to defaults', () async {
+      final client = MockClient(
+        (request) async => http.Response(
+          '{"configVersion":1,"ai":{"enabled":true,"provider":"gemini","model":"gemini-3.6-flash","timeoutMs":25000}}',
+          200,
+        ),
+      );
+      final service = AiConfigService(baseUrl: 'https://example.test', client: client);
+      await service.refresh();
+
+      final ui = await service.getCachedUi();
+      expect(ui.language, 'en');
+      expect(ui.placeholder, isNull);
+    });
+
+    test('never exposes a raw IP or secret-shaped field from the ui block', () async {
+      final client = MockClient(
+        (request) async => http.Response(
+          '{"configVersion":1,"ai":{"enabled":true,"provider":"gemini","model":"gemini-3.6-flash","timeoutMs":25000},'
+          '"ui":{"language":"th","country":"TH","placeholder":"คุณต้องการแปลงอะไร?","translationVersion":1,"ip":"1.2.3.4"}}',
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        ),
+      );
+      final service = AiConfigService(baseUrl: 'https://example.test', client: client);
+      await service.refresh();
+      final ui = await service.getCachedUi();
+
+      // UiConfig only ever exposes these four fields - a stray "ip" field
+      // in the response has nowhere to surface.
+      expect(ui.language, 'th');
+      expect(ui.country, 'TH');
+      expect(ui.placeholder, 'คุณต้องการแปลงอะไร?');
+    });
+  });
+
   test('never caches a response containing a key/secret-shaped field', () async {
     final client = MockClient(
       (request) async => http.Response(

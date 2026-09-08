@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/ai_config.dart';
+import '../models/ui_config.dart';
 
 /// Fetches and caches the backend's public AI runtime config
 /// (`GET /api/config`) so the AI provider/model/timeout can change from the
@@ -31,6 +32,23 @@ class AiConfigService {
       return AiConfig.fromJson(decoded);
     } catch (_) {
       return AiConfig.defaults;
+    }
+  }
+
+  /// Reads the `ui` block from the same cached `/api/config` response
+  /// [refresh] already stores - no separate request, no separate cache
+  /// entry. Synchronous-fast (local storage only); safe to await before the
+  /// first frame since it never touches the network.
+  Future<UiConfig> getCachedUi() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey);
+    if (raw == null) return UiConfig.defaults;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return UiConfig.defaults;
+      return UiConfig.fromJson(decoded);
+    } catch (_) {
+      return UiConfig.defaults;
     }
   }
 

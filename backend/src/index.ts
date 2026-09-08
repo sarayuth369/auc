@@ -34,8 +34,10 @@ export default {
     }
 
     if (url.pathname === '/api/config' && request.method === 'GET') {
-      // Public runtime config only - never touches GEMINI_API_KEY.
-      return json(buildPublicConfig(env), 200, headers);
+      // Public runtime config only - never touches GEMINI_API_KEY. The only
+      // location signal used is Cloudflare's own request.cf.country (never
+      // the raw IP, never logged) - just to pick a curated UI language.
+      return json(buildPublicConfig(env, request.cf?.country as string | undefined), 200, headers);
     }
 
     if (url.pathname === '/privacy-policy' && request.method === 'GET') {

@@ -8,6 +8,7 @@ import 'config/ad_config.dart';
 import 'config/backend_config.dart';
 import 'data/unit_repository.dart';
 import 'domain/conversion_engine.dart';
+import 'l10n/home_placeholder.dart';
 import 'services/ai_config_service.dart';
 import 'services/ai_resolver_service.dart';
 import 'services/conversion_service.dart';
@@ -39,6 +40,15 @@ Future<void> main() async {
       // built-in defaults below until this completes.
       unawaited(aiConfigService.refresh());
 
+      // Home placeholder: device locale first (instant, no I/O at all), a
+      // cached server hint second (local storage only - still no network
+      // wait), English last. Never awaits the network, never shows a
+      // spinner just for this text - see home_placeholder.dart.
+      final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+      final convertPlaceholder = kCuratedHomePlaceholders.containsKey(deviceLocale.languageCode)
+          ? curatedHomePlaceholderFor(deviceLocale)
+          : (await aiConfigService.getCachedUi()).placeholder ?? kCuratedHomePlaceholders['en']!;
+
       final repository = await UnitRepository.loadFromAssets();
       final conversionService = ConversionService(
         aiResolverService: MockAiResolverService(),
@@ -57,6 +67,7 @@ Future<void> main() async {
           favoritesService: FavoritesService(),
           settingsService: settingsService,
           themeModeNotifier: themeModeNotifier,
+          convertPlaceholder: convertPlaceholder,
         ),
       );
     },
