@@ -7,8 +7,8 @@
       "units": [
         {"canonical": "meter", "symbol": "m", "aliases": ["meter", "meters", "metre", "metres", "m", "เมตร"], "factor": 1.0},
         {"canonical": "kilometer", "symbol": "km", "aliases": ["kilometer", "kilometers", "kilometre", "kilometres", "km", "กิโลเมตร"], "factor": 1000.0},
-        {"canonical": "centimeter", "symbol": "cm", "aliases": ["centimeter", "centimeters", "centimetre", "centimetres", "cm", "เซนติเมตร"], "factor": 0.01},
-        {"canonical": "millimeter", "symbol": "mm", "aliases": ["millimeter", "millimeters", "millimetre", "millimetres", "mm", "มิลลิเมตร"], "factor": 0.001},
+        {"canonical": "centimeter", "symbol": "cm", "aliases": ["centimeter", "centimeters", "centimetre", "centimetres", "cm", "เซนติเมตร", "เซน"], "factor": 0.01},
+        {"canonical": "millimeter", "symbol": "mm", "aliases": ["millimeter", "millimeters", "millimetre", "millimetres", "mm", "มิลลิเมตร", "มิล"], "factor": 0.001},
         {"canonical": "micrometer", "symbol": "μm", "aliases": ["micrometer", "micrometers", "micrometre", "micrometres", "um", "μm"], "factor": 0.000001, "source": "si"},
         {"canonical": "nanometer", "symbol": "nm", "aliases": ["nanometer", "nanometers", "nanometre", "nanometres", "nm"], "factor": 0.000000001, "source": "si"},
         {"canonical": "mile", "symbol": "mi", "aliases": ["mile", "miles", "mi", "ไมล์"], "factor": 1609.344},
@@ -16,7 +16,8 @@
         {"canonical": "foot", "symbol": "ft", "aliases": ["foot", "feet", "ft", "ฟุต"], "factor": 0.3048},
         {"canonical": "inch", "symbol": "in", "aliases": ["inch", "inches", "in", "นิ้ว"], "factor": 0.0254},
         {"canonical": "wa", "symbol": "wa", "aliases": ["wa", "วา"], "factor": 2.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"},
-        {"canonical": "sen", "symbol": "sen", "aliases": ["sen", "เส้น"], "factor": 40.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"}
+        {"canonical": "sen", "symbol": "sen", "aliases": ["sen", "เส้น"], "factor": 40.0, "language": "th", "country": "TH", "source": "traditional_thai_unit"},
+        {"canonical": "hun", "symbol": "หุน", "aliases": ["หุน", "หุนส์"], "factor": 0.003175, "language": "th", "country": "TH", "source": "thai_trade_unit"}
       ]
     },
     {

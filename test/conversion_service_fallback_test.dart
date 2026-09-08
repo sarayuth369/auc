@@ -77,6 +77,68 @@ void main() {
   );
 
   test(
+    'local-first: หุน (Thai trade unit, 1/8 inch) resolves without the remote resolver',
+    () async {
+      final remote = _FakeAiResolver(
+        (_) async => throw StateError('should not be called'),
+      );
+      final service = ConversionService(
+        aiResolverService: MockAiResolverService(),
+        conversionEngine: ConversionEngine(repository),
+        remoteAiResolverService: remote,
+      );
+
+      final cases = <String, String>{
+        // Task spec A-I.
+        '4 หุน เท่ากับกี่ cm': '1.27 cm',
+        '4 หุน เท่ากับกี่มิล': '12.7 mm',
+        '4 หุน เท่ากับกี่ mm': '12.7 mm',
+        '4 หุน เท่ากับกี่นิ้ว': '0.5 in',
+        '8 หุน เท่ากับกี่นิ้ว': '1 in',
+        '1 นิ้ว เท่ากับกี่หุน': '8 หุน',
+        '6 หุน เป็นกี่เซนติเมตร': '1.905 cm',
+        '2 หุน เป็นกี่มิลลิเมตร': '6.35 mm',
+        '16 หุน เป็นกี่นิ้ว': '2 in',
+        // Common technician wording variants.
+        '4 หุน เป็นกี่ cm': '1.27 cm',
+        '4 หุน เป็นกี่เซน': '1.27 cm',
+        '4 หุน เป็นกี่เซนติเมตร': '1.27 cm',
+        '4 หุน เท่ากับกี่มิลลิเมตร': '12.7 mm',
+        '4หุนเท่ากับกี่ cm': '1.27 cm',
+        // Spacing variants (section 3).
+        '4หุน เท่ากับกี่ cm': '1.27 cm',
+        '4  หุน เท่ากับกี่ cm': '1.27 cm',
+        // "หุนส์" alias.
+        '4 หุนส์ เท่ากับกี่ cm': '1.27 cm',
+      };
+
+      for (final entry in cases.entries) {
+        final result = await service.convert(entry.key);
+        expect(result.displayText, entry.value, reason: entry.key);
+      }
+
+      expect(remote.callCount, 0);
+    },
+  );
+
+  test('alias-collision safety: new short Thai aliases resolve to the right unit, existing ones are unaffected', () async {
+    final repo = repository;
+    expect(repo.resolve('เซน')!.canonical, 'centimeter');
+    expect(repo.resolve('มิล')!.canonical, 'millimeter');
+    expect(repo.resolve('หุน')!.canonical, 'hun');
+    expect(repo.resolve('หุนส์')!.canonical, 'hun');
+    // Pre-existing aliases must be completely unaffected by the additions.
+    expect(repo.resolve('กิโล')!.canonical, 'kilogram');
+    expect(repo.resolve('ปอนด์')!.canonical, 'pound');
+    expect(repo.resolve('นิ้ว')!.canonical, 'inch');
+    expect(repo.resolve('ฟุต')!.canonical, 'foot');
+    expect(repo.resolve('วา')!.canonical, 'wa');
+    expect(repo.resolve('เส้น')!.canonical, 'sen');
+    expect(repo.resolve('เซนติเมตร')!.canonical, 'centimeter');
+    expect(repo.resolve('มิลลิเมตร')!.canonical, 'millimeter');
+  });
+
+  test(
     'falls back to remote when the local parser cannot understand the input',
     () async {
       final remote = _FakeAiResolver(
