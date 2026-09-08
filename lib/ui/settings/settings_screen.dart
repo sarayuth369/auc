@@ -241,10 +241,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const Divider(),
             const _SectionHeader('Premium'),
-            ListTile(
-              leading: const Icon(Icons.workspace_premium_outlined),
-              title: const Text('SmartConverter Premium'),
-              subtitle: const Text('Remove ads, unlock future features'),
+            _PremiumPromoCard(
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => PremiumScreen(
@@ -265,6 +262,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 16),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Visually prominent Premium entry point - deliberately distinct from a
+/// plain Settings row so it invites a tap. Colors are fixed (not
+/// theme-derived) so the gradient reads correctly in both light and dark
+/// app themes, same treatment as the app icon's own indigo/violet palette.
+class _PremiumPromoCard extends StatelessWidget {
+  static const _start = Color(0xFF4F46E5);
+  static const _end = Color(0xFF7C3AED);
+  static const _gold = Color(0xFFFBBF24);
+
+  final VoidCallback onTap;
+  const _PremiumPromoCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Ink(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_start, _end],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.workspace_premium, color: _gold, size: 22),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'SmartConverter Premium',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: Colors.white.withValues(alpha: 0.8)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'No ads. More power. Convert smarter.',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.85)),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(color: _gold, borderRadius: BorderRadius.circular(20)),
+                    child: Text(
+                      'UPGRADE NOW',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: const Color(0xFF1F2937),
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
