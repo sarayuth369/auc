@@ -103,16 +103,14 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 # flutter_launcher_icons config - run `dart run flutter_launcher_icons` after
-# changing. Source artwork is the provided SmartConverter/AUC icon, unmodified;
-# the adaptive foreground is that same artwork uniformly scaled down and
-# padded (never redesigned/cropped) so nothing is clipped by a circular or
-# squircle launcher mask.
+# changing. Source artwork is the provided SmartConverter icon, transparent
+# background, unmodified. Legacy-icon-only (no adaptive background/foreground
+# split): a transparent adaptive_icon_background renders as solid black on
+# several real-device launchers (known OEM/Android compositor issue), and the
+# adaptive foreground's safe-zone padding made the icon look undersized.
+# Shipping the full-bleed transparent artwork as the plain launcher icon
+# avoids both problems - modern launchers mask/clip it into their own shape
+# with no injected background color.
 flutter_launcher_icons:
   android: true
   image_path: "assets/icons/app_icon_512.png"
-  adaptive_icon_background: "#00000000"
-  adaptive_icon_foreground: "assets/icons/app_icon_adaptive_foreground.png"
-  # Our own foreground image already scales content into the safe zone
-  # (see assets/icons/_generate_adaptive_foreground.py); disable the
-  # package's additional default inset to avoid shrinking it twice.
-  adaptive_icon_foreground_inset: 0
