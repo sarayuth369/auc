@@ -104,13 +104,25 @@ flutter:
 
 # flutter_launcher_icons config - run `dart run flutter_launcher_icons` after
 # changing. Source artwork is the provided SmartConverter icon, transparent
-# background, unmodified. Legacy-icon-only (no adaptive background/foreground
-# split): a transparent adaptive_icon_background renders as solid black on
-# several real-device launchers (known OEM/Android compositor issue), and the
-# adaptive foreground's safe-zone padding made the icon look undersized.
-# Shipping the full-bleed transparent artwork as the plain launcher icon
-# avoids both problems - modern launchers mask/clip it into their own shape
-# with no injected background color.
+# background, unmodified.
+#
+# Legacy-icon-only (no adaptive resources) was tried and reverted: on
+# API26+, a launcher with no adaptive icon resource falls back to ITS OWN
+# default plate for legacy icons - observed as solid white on one launcher
+# (this app used to also show solid black when adaptive_icon_background was
+# transparent, a separate known OEM/compositor bug). Neither is under our
+# control once we opt out of adaptive icons entirely.
+#
+# Fix: provide a real adaptive icon again, but with an OPAQUE background
+# color sampled from the artwork's own outer rim (#2FBEFD) instead of
+# transparent or white/black - so any sliver the mask reveals outside our
+# circular artwork blends into the same blue instead of showing as a ring.
+# adaptive_icon_foreground is our artwork pre-scaled to just under Android's
+# 66.7% safe-zone fraction (see _generate_adaptive_foreground.py) so nothing
+# is clipped by the OS's adaptive-icon viewport crop.
 flutter_launcher_icons:
   android: true
   image_path: "assets/icons/app_icon_512.png"
+  adaptive_icon_background: "#2FBEFD"
+  adaptive_icon_foreground: "assets/icons/app_icon_adaptive_foreground.png"
+  adaptive_icon_foreground_inset: 0
