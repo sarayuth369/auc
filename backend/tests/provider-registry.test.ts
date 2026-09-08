@@ -8,6 +8,12 @@ describe('getProvider', () => {
     expect(getProvider(' GEMINI ')).toBeDefined();
   });
 
+  it('returns a provider for "cloudflare" (case-insensitive, trimmed)', () => {
+    expect(getProvider('cloudflare')).toBeDefined();
+    expect(getProvider('Cloudflare')).toBeDefined();
+    expect(getProvider(' CLOUDFLARE ')).toBeDefined();
+  });
+
   it('throws UnsupportedProviderError for an unregistered provider', () => {
     expect(() => getProvider('openai')).toThrow(UnsupportedProviderError);
     expect(() => getProvider('anthropic')).toThrow(UnsupportedProviderError);

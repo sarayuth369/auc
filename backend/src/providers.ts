@@ -1,4 +1,5 @@
 import type { RawResolveOutput } from './gemini';
+import type { WorkersAiBinding } from './cloudflare-ai';
 
 /** Non-secret request context a provider needs to resolve one request. */
 export interface ProviderRequest {
@@ -6,6 +7,8 @@ export interface ProviderRequest {
   apiKey: string;
   model: string;
   fetchImpl: typeof fetch;
+  /** Workers AI binding (env.AI), only used by CloudflareProvider. */
+  ai?: WorkersAiBinding;
 }
 
 /**

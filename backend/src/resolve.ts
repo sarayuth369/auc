@@ -1,3 +1,4 @@
+import { CloudflareAiInvalidResponseError, CloudflareAiRequestError } from './cloudflare-ai';
 import { clarificationBody, errorBody } from './errors';
 import { DEFAULT_MODEL, GeminiInvalidResponseError, GeminiRequestError } from './gemini';
 import { findDimensionMismatch } from './dimensions';
@@ -5,9 +6,12 @@ import { getProvider, UnsupportedProviderError } from './provider-registry';
 import { canonicalRegionalUnit, needsRegionClarification } from './regional';
 import { validateResolveBody } from './validation';
 import type { ConfigEnv } from './config';
+import type { WorkersAiBinding } from './cloudflare-ai';
 
 export interface ResolveEnv extends ConfigEnv {
   GEMINI_API_KEY: string;
+  /** Workers AI binding (see wrangler.toml `[ai] binding = "AI"`), only used when AI_PROVIDER=cloudflare. */
+  AI?: WorkersAiBinding;
 }
 
 export interface ResolveDeps {
@@ -47,15 +51,16 @@ export async function resolveConversion(
       apiKey: env.GEMINI_API_KEY,
       model: env.AI_MODEL ?? env.GEMINI_MODEL ?? DEFAULT_MODEL,
       fetchImpl: deps.fetchImpl,
+      ai: env.AI,
     });
   } catch (err) {
-    if (err instanceof GeminiInvalidResponseError) {
+    if (err instanceof GeminiInvalidResponseError || err instanceof CloudflareAiInvalidResponseError) {
       return {
         status: 502,
         body: errorBody('AI_INVALID_RESPONSE', 'The AI resolver returned an unreadable response.'),
       };
     }
-    if (err instanceof GeminiRequestError) {
+    if (err instanceof GeminiRequestError || err instanceof CloudflareAiRequestError) {
       return { status: 502, body: errorBody('AI_ERROR', 'The AI resolver is temporarily unavailable.') };
     }
     if (err instanceof UnsupportedProviderError) {

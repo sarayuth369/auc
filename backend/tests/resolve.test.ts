@@ -1,7 +1,21 @@
 import { describe, expect, it } from 'vitest';
+import type { WorkersAiBinding } from '../src/cloudflare-ai';
 import { resolveConversion, type ResolveEnv } from '../src/resolve';
 
 const env: ResolveEnv = { GEMINI_API_KEY: 'test-key', GEMINI_MODEL: 'gemini-test' };
+
+/** Stubs env.AI (Workers AI binding) with a fixed .run() result or rejection. */
+function aiReturning(response: unknown): WorkersAiBinding {
+  return { run: async () => response };
+}
+
+function aiRejecting(message: string): WorkersAiBinding {
+  return {
+    run: async () => {
+      throw new Error(message);
+    },
+  };
+}
 
 /** Builds a fake Gemini REST response envelope carrying `payload` as the model's JSON text. */
 function geminiOk(payload: unknown): Response {
@@ -239,5 +253,193 @@ describe('resolveConversion', () => {
     const overrideEnv: ResolveEnv = { ...env, AI_MODEL: 'custom-model' };
     await resolveConversion({ text: '10 km to miles' }, overrideEnv, { fetchImpl });
     expect(requestedModel).toBe('custom-model');
+  });
+
+  it('17. "1 kg to oz" resolves (RESOLVED)', async () => {
+    const fetchImpl = fetchReturning(
+      geminiOk({ intent: 'convert', language: 'en', items: [{ value: 1, unit: 'kilogram' }], target_unit: 'ounce' }),
+    );
+    const result = await resolveConversion({ text: '1 kg to oz' }, env, { fetchImpl });
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ success: true, target_unit: 'ounce' });
+  });
+
+  it('18. "100 kg to °C" is rejected as INVALID_CONVERSION (weight vs temperature)', async () => {
+    const fetchImpl = fetchReturning(
+      geminiOk({ intent: 'convert', language: 'en', items: [{ value: 100, unit: 'kilogram' }], target_unit: 'celsius' }),
+    );
+    const result = await resolveConversion({ text: '100 kg to °C' }, env, { fetchImpl });
+    expect(result.status).toBe(422);
+    expect(result.body).toMatchObject({ success: false, error: { code: 'UNSUPPORTED_CONVERSION' } });
+  });
+
+  it('19. an unresolvable/unknown unit is not blocked by the dimension guard - Flutter has final say (UNSUPPORTED)', async () => {
+    const fetchImpl = fetchReturning(
+      geminiOk({ intent: 'convert', language: 'en', items: [{ value: 1, unit: 'zorkflarp' }], target_unit: 'zorkflarp_v2' }),
+    );
+    const result = await resolveConversion({ text: '1 zorkflarp to zorkflarp_v2' }, env, { fetchImpl });
+    // No dimension is known for either unit, so the guard can't flag a
+    // mismatch here; the Worker passes it through and the Flutter
+    // UnitRepository is the one that ultimately rejects an unknown unit.
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ success: true, items: [{ unit: 'zorkflarp' }] });
+  });
+
+  describe('Cloudflare Workers AI provider', () => {
+    const cfEnv: ResolveEnv = { ...env, AI_PROVIDER: 'cloudflare', AI_MODEL: '@cf/google/gemma-4-26b-a4b-it' };
+    const unusedFetch = fetchThrowing('gemini fetch should not be called for the cloudflare provider');
+
+    it('20. "5 lb to kg" resolves via Workers AI (RESOLVED)', async () => {
+      const ai = aiReturning({
+        response: JSON.stringify({
+          intent: 'convert',
+          language: 'en',
+          items: [{ value: 5, unit: 'pound' }],
+          target_unit: 'kilogram',
+        }),
+      });
+      const result = await resolveConversion(
+        { text: '5 lb to kg' },
+        { ...cfEnv, AI: ai },
+        { fetchImpl: unusedFetch },
+      );
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: true, target_unit: 'kilogram' });
+    });
+
+    it('20b. an OpenAI-chat-shaped response (choices[0].message.content) is also parsed', async () => {
+      // The Gemma model this project targets replies in the OpenAI chat
+      // completion shape, not the classic Workers AI `{ response }` shape.
+      const ai = aiReturning({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                intent: 'convert',
+                language: 'en',
+                items: [{ value: 10, unit: 'kilometer' }],
+                target_unit: 'mile',
+              }),
+            },
+          },
+        ],
+      });
+      const result = await resolveConversion(
+        { text: 'Convert 10 kilometers to miles.' },
+        { ...cfEnv, AI: ai },
+        { fetchImpl: unusedFetch },
+      );
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: true, target_unit: 'mile' });
+    });
+
+    it('21. a ```json-fenced response from Workers AI is still parsed', async () => {
+      const ai = aiReturning({
+        response:
+          '```json\n' +
+          JSON.stringify({
+            intent: 'convert',
+            language: 'en',
+            items: [{ value: 12000, unit: 'btu/h' }],
+            target_unit: 'kilowatt',
+          }) +
+          '\n```',
+      });
+      const result = await resolveConversion(
+        { text: '12000 BTU/h to kW' },
+        { ...cfEnv, AI: ai },
+        { fetchImpl: unusedFetch },
+      );
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: true });
+    });
+
+    it('22. malformed Workers AI JSON returns a controlled AI_INVALID_RESPONSE (safe failure, never crashes)', async () => {
+      const ai = aiReturning({ response: 'not valid json {' });
+      const result = await resolveConversion(
+        { text: '10 km to miles' },
+        { ...cfEnv, AI: ai },
+        { fetchImpl: unusedFetch },
+      );
+      expect(result.status).toBe(502);
+      expect(result.body).toMatchObject({ success: false, error: { code: 'AI_INVALID_RESPONSE' } });
+    });
+
+    it('23. Workers AI unavailable (ai.run rejects) returns a controlled AI_ERROR', async () => {
+      const ai = aiRejecting('binding unavailable');
+      const result = await resolveConversion(
+        { text: '10 km to miles' },
+        { ...cfEnv, AI: ai },
+        { fetchImpl: unusedFetch },
+      );
+      expect(result.status).toBe(502);
+      expect(result.body).toMatchObject({ success: false, error: { code: 'AI_ERROR' } });
+    });
+
+    it('24. AI_PROVIDER=cloudflare with no env.AI binding fails cleanly, never crashes', async () => {
+      const result = await resolveConversion({ text: '10 km to miles' }, cfEnv, { fetchImpl: unusedFetch });
+      expect(result.status).toBe(502);
+      expect(result.body).toMatchObject({ success: false, error: { code: 'AI_ERROR' } });
+    });
+
+    it('25. Thai local unit "3 ไร่ 4 งาน เป็นกี่ตารางเมตร" resolves via Workers AI too', async () => {
+      const ai = aiReturning({
+        response: JSON.stringify({
+          intent: 'convert',
+          language: 'th',
+          items: [
+            { value: 3, unit: 'rai' },
+            { value: 4, unit: 'ngan' },
+          ],
+          target_unit: 'square_meter',
+        }),
+      });
+      const result = await resolveConversion(
+        { text: '3 ไร่ 4 งาน เป็นกี่ตารางเมตร' },
+        { ...cfEnv, AI: ai },
+        { fetchImpl: unusedFetch },
+      );
+      expect(result.status).toBe(200);
+      // Backend passes rai/ngan straight through unmodified - the Flutter
+      // Unit Registry/ConversionEngine remains the sole source of truth for
+      // 1 rai = 1600 m^2 / 1 ngan = 400 m^2, never re-derived here.
+      expect(result.body).toMatchObject({
+        success: true,
+        language: 'th',
+        target_unit: 'square_meter',
+        items: [
+          { value: 3, unit: 'rai' },
+          { value: 4, unit: 'ngan' },
+        ],
+      });
+    });
+
+    it('26. bare "bigha" with no region still asks for clarification via Workers AI (CLARIFICATION_REQUIRED)', async () => {
+      const ai = aiReturning({
+        response: JSON.stringify({
+          intent: 'convert',
+          language: 'en',
+          items: [{ value: 1, unit: 'bigha' }],
+          target_unit: 'square_meter',
+        }),
+      });
+      const result = await resolveConversion(
+        { text: '1 bigha to square meters' },
+        { ...cfEnv, AI: ai },
+        { fetchImpl: unusedFetch },
+      );
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: false, needs_clarification: true, unit: 'bigha' });
+    });
+  });
+
+  it('27. Gemini provider still works when AI_PROVIDER is explicitly "gemini"', async () => {
+    const fetchImpl = fetchReturning(
+      geminiOk({ intent: 'convert', language: 'en', items: [{ value: 10, unit: 'kilometer' }], target_unit: 'mile' }),
+    );
+    const explicitEnv: ResolveEnv = { ...env, AI_PROVIDER: 'gemini' };
+    const result = await resolveConversion({ text: '10 km to miles' }, explicitEnv, { fetchImpl });
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ success: true });
   });
 });

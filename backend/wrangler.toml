@@ -10,12 +10,27 @@ compatibility_date = "2024-11-01"
 # response Flutter reads at runtime - change these to switch provider/model
 # without rebuilding the app. None of this is secret; GEMINI_API_KEY stays a
 # Worker secret only (wrangler secret put GEMINI_API_KEY).
+#
+# AI_PROVIDER=cloudflare routes through Workers AI (env.AI, bound below) -
+# no API key needed. Live-tested 2026-09-08: @cf/google/gemma-4-26b-a4b-it
+# hallucinated on 2 of 4 real requests (Thai "1 kg to oz" -> "1 acre to
+# square_meter"; Thai "3 rai 4 ngan to sq m" -> "3 hour to minute") - both
+# dimensionally self-consistent, so the dimension guard can't catch them.
+# Keeping AI_PROVIDER=gemini as the live default until Workers AI proves
+# reliable enough for this project's Thai-accuracy bar; CloudflareProvider
+# stays fully wired/tested - flip this var (no redeploy of code) to try it.
 [vars]
 GEMINI_MODEL = "gemini-3.6-flash"
 AI_ENABLED = "true"
 AI_PROVIDER = "gemini"
 AI_MODEL = "gemini-3.6-flash"
 AI_TIMEOUT_MS = "25000"
+
+# Workers AI binding, created in the Cloudflare dashboard. Grants env.AI.run()
+# - no API key, nothing secret; this line just wires the existing binding
+# into source control.
+[ai]
+binding = "AI"
 
 [observability]
 enabled = true

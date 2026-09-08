@@ -48,7 +48,9 @@ const RESPONSE_SCHEMA = {
 // Kept short on purpose: fewer input tokens per request, and the model is
 // told to normalize everything into canonical, snake_case unit ids so
 // Flutter's UnitRepository (not this Worker, not the model) does the math.
-const PROMPT_PREFIX = `You convert one natural-language unit-conversion request into strict JSON.
+// Exported so other providers (e.g. cloudflare-ai.ts) share the exact same
+// extraction contract instead of maintaining a second copy.
+export const INSTRUCTIONS = `You convert one natural-language unit-conversion request into strict JSON.
 Never compute the numeric answer yourself - only extract structured data.
 Normalize every unit name (any language) to a lowercase snake_case canonical id,
 e.g. "metre"/"meters"/"メートル" -> "meter", "กิโลเมตร" -> "kilometer".
@@ -56,9 +58,9 @@ If a unit's size depends on country/region (e.g. "bigha") and no region is
 stated, set needs_clarification=true, ambiguous_unit to that unit, and
 clarification_question to a short question asking which region/standard.
 Otherwise set needs_clarification=false. Detect the input's language as an
-ISO 639-1 code. Output JSON only, matching the given schema, no prose.
+ISO 639-1 code. Output JSON only, matching the given schema, no prose.`;
 
-Input: `;
+const PROMPT_PREFIX = `${INSTRUCTIONS}\n\nInput: `;
 
 export async function resolveWithGemini(
   text: string,
@@ -129,7 +131,8 @@ function extractText(envelope: unknown): string | null {
   return typeof partText === 'string' ? partText : null;
 }
 
-function isRawResolveOutput(value: unknown): value is RawResolveOutput {
+/** Exported so other providers can validate against the same canonical schema. */
+export function isRawResolveOutput(value: unknown): value is RawResolveOutput {
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
   if (typeof v.intent !== 'string') return false;
