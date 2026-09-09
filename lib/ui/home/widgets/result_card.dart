@@ -10,10 +10,14 @@ import '../../../services/conversion_service.dart';
 /// currency rate (see task: result UX should distinguish these at a
 /// glance). Returns null for a normal unit conversion, where no extra label
 /// is needed.
-String? _categoryLabel(String categoryId) {
+String? _categoryLabel(String categoryId, {bool isStalePrice = false}) {
   if (categoryId == calculationCategoryId) return 'Calculation';
-  if (categoryId == 'currency') return 'Live exchange rate';
-  if (categoryId == 'crypto') return 'Live crypto price';
+  if (categoryId == 'currency') {
+    return isStalePrice ? 'Using recently cached rate' : 'Live exchange rate';
+  }
+  if (categoryId == 'crypto') {
+    return isStalePrice ? 'Using recently cached price' : 'Live crypto price';
+  }
   return null;
 }
 
@@ -86,7 +90,8 @@ class ResultCard extends StatelessWidget {
                 context,
               ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
-            if (_categoryLabel(r.categoryId) case final label?) ...[
+            if (_categoryLabel(r.categoryId, isStalePrice: r.isStalePrice)
+                case final label?) ...[
               const SizedBox(height: 2),
               Text(
                 label,

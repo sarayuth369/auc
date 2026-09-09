@@ -147,42 +147,55 @@ export interface MoneyResolvers {
   cryptoPriceProvider: CryptoPriceProvider;
 }
 
+export interface MoneyResolution {
+  result: number;
+  rate: number;
+  /** True if ANY crypto leg used a stale (cached-but-expired) price rather
+   *  than a fresh provider fetch - the caller must disclose this, never
+   *  present it as a live/current price. Always false for fiat-only. */
+  stale: boolean;
+}
+
 /**
  * Computes the final amount for any fiat/crypto/mixed pair. Pure
  * deterministic arithmetic on top of whatever the two providers return -
  * this function never fabricates a number itself, and AI is never called
  * anywhere in this path. Crypto legs always route through USD as the
  * common quote currency (e.g. ETH -> BTC is ETH/USD divided by BTC/USD).
+ * A crypto->crypto request fetches both symbols in ONE batched provider
+ * call instead of two separate ones (see CachingCryptoPriceProvider).
  */
 export async function resolveMoneyRequest(
   request: MoneyRequest,
   resolvers: MoneyResolvers,
-): Promise<{ result: number; rate: number }> {
+): Promise<MoneyResolution> {
   const { amount, from, to } = request;
 
   try {
     if (from.type === 'fiat' && to.type === 'fiat') {
       const rate = await resolvers.fiatRateProvider.getRate(from.code, to.code);
-      return { result: amount * rate, rate };
+      return { result: amount * rate, rate, stale: false };
     }
 
     if (from.type === 'crypto' && to.type === 'crypto') {
-      const [fromUsd, toUsd] = await Promise.all([
-        resolvers.cryptoPriceProvider.getUsdPrice(from.code),
-        resolvers.cryptoPriceProvider.getUsdPrice(to.code),
-      ]);
-      const rate = fromUsd / toUsd;
-      return { result: amount * rate, rate };
+      const prices = await resolvers.cryptoPriceProvider.getUsdPrices([from.code, to.code]);
+      const fromPrice = prices[from.code];
+      const toPrice = prices[to.code];
+      if (!fromPrice || !toPrice) {
+        throw new Error(`Missing price for ${from.code} or ${to.code}.`);
+      }
+      const rate = fromPrice.price / toPrice.price;
+      return { result: amount * rate, rate, stale: fromPrice.stale || toPrice.stale };
     }
 
     if (from.type === 'crypto' && to.type === 'fiat') {
       const cryptoUsd = await resolvers.cryptoPriceProvider.getUsdPrice(from.code);
-      const usdAmount = amount * cryptoUsd;
+      const usdAmount = amount * cryptoUsd.price;
       if (to.code === 'USD') {
-        return { result: usdAmount, rate: cryptoUsd };
+        return { result: usdAmount, rate: cryptoUsd.price, stale: cryptoUsd.stale };
       }
       const fxRate = await resolvers.fiatRateProvider.getRate('USD', to.code);
-      return { result: usdAmount * fxRate, rate: cryptoUsd * fxRate };
+      return { result: usdAmount * fxRate, rate: cryptoUsd.price * fxRate, stale: cryptoUsd.stale };
     }
 
     // from.type === 'fiat' && to.type === 'crypto'
@@ -193,8 +206,8 @@ export async function resolveMoneyRequest(
       fxRate = await resolvers.fiatRateProvider.getRate(from.code, 'USD');
       usdAmount = amount * fxRate;
     }
-    const rate = fxRate / cryptoUsd;
-    return { result: usdAmount / cryptoUsd, rate };
+    const rate = fxRate / cryptoUsd.price;
+    return { result: usdAmount / cryptoUsd.price, rate, stale: cryptoUsd.stale };
   } catch (err) {
     throw new MoneyRateUnavailableError(err instanceof Error ? err.message : 'Rate/price unavailable.');
   }

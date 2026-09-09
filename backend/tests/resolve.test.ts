@@ -769,8 +769,14 @@ describe('resolveConversion', () => {
   });
 
   describe('crypto / mixed money (never sent to AI)', () => {
+    const usdPrices: Record<string, number> = { BTC: 65000, ETH: 3250 };
     const cryptoProvider = {
-      getUsdPrice: async (symbol: string) => (symbol === 'BTC' ? 65000 : symbol === 'ETH' ? 3250 : 1),
+      getUsdPrice: async (symbol: string) => ({ price: usdPrices[symbol] ?? 1, stale: false }),
+      getUsdPrices: async (symbols: string[]) => {
+        const result: Record<string, { price: number; stale: boolean }> = {};
+        for (const symbol of symbols) result[symbol] = { price: usdPrices[symbol] ?? 1, stale: false };
+        return result;
+      },
     };
     const fiatProvider = {
       getRate: async (from: string, to: string) => {
@@ -864,6 +870,9 @@ describe('resolveConversion', () => {
       const fetchImpl = fetchThrowing('should not be called');
       const failingCryptoProvider = {
         getUsdPrice: async () => {
+          throw new Error('price feed down');
+        },
+        getUsdPrices: async () => {
           throw new Error('price feed down');
         },
       };

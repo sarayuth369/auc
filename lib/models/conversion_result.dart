@@ -7,12 +7,19 @@ class ConversionResult {
   final String categoryId;
   final DateTime timestamp;
 
+  /// True only for a crypto/currency result served from a stale (expired but
+  /// still-recent) cached price because the live provider was unavailable -
+  /// must never be silently presented as a live/current price. Always false
+  /// for every non-money category.
+  final bool isStalePrice;
+
   ConversionResult({
     required this.inputText,
     required this.value,
     required this.unit,
     required this.formattedValue,
     required this.categoryId,
+    this.isStalePrice = false,
     DateTime? timestamp,
   }) : timestamp = timestamp ?? DateTime.now();
 

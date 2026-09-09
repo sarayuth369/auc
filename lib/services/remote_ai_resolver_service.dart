@@ -136,6 +136,10 @@ class RemoteAiResolverService implements AiResolverService {
     // to scientific notation, matching conventional crypto precision.
     final assetType = body['assetType'];
     final isCryptoInvolved = assetType == 'crypto' || assetType == 'mixed';
+    // "stale" = the live crypto provider was unavailable and this used a
+    // recent-but-expired cached price instead (see backend crypto.ts) - must
+    // be disclosed to the user, never presented as a live/current price.
+    final isStale = body['priceAge'] == 'stale';
     return ConversionResult(
       inputText: inputText,
       value: result.toDouble(),
@@ -145,6 +149,7 @@ class RemoteAiResolverService implements AiResolverService {
         maxDecimals: isCryptoInvolved ? 8 : 4,
       ),
       categoryId: isCryptoInvolved ? 'crypto' : 'currency',
+      isStalePrice: isStale,
     );
   }
 

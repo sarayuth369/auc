@@ -178,11 +178,19 @@ describe('resolveMoneyRequest - deterministic cross-rate arithmetic, never AI', 
       throw new Error(`unexpected fiat pair ${from}->${to}`);
     },
   };
+  const usdPrices: Record<string, number> = { BTC: 65000, ETH: 3250 };
   const cryptoPriceProvider = {
     getUsdPrice: async (symbol: string) => {
-      if (symbol === 'BTC') return 65000;
-      if (symbol === 'ETH') return 3250;
-      throw new Error(`unexpected symbol ${symbol}`);
+      if (usdPrices[symbol] === undefined) throw new Error(`unexpected symbol ${symbol}`);
+      return { price: usdPrices[symbol], stale: false };
+    },
+    getUsdPrices: async (symbols: string[]) => {
+      const result: Record<string, { price: number; stale: boolean }> = {};
+      for (const symbol of symbols) {
+        if (usdPrices[symbol] === undefined) throw new Error(`unexpected symbol ${symbol}`);
+        result[symbol] = { price: usdPrices[symbol], stale: false };
+      }
+      return result;
     },
   };
   const resolvers = { fiatRateProvider, cryptoPriceProvider };

@@ -97,7 +97,7 @@ export async function resolveConversion(
   const moneyRequest = extractMoneyRequest(validation.text);
   if (moneyRequest) {
     try {
-      const { result, rate } = await resolveMoneyRequest(moneyRequest, {
+      const { result, rate, stale } = await resolveMoneyRequest(moneyRequest, {
         fiatRateProvider: deps.currencyRateProvider ?? defaultCurrencyRateProvider,
         cryptoPriceProvider: deps.cryptoPriceProvider ?? defaultCryptoPriceProvider,
       });
@@ -109,6 +109,11 @@ export async function resolveConversion(
           success: true,
           intent: 'currency_convert',
           assetType,
+          // "fresh" = just-fetched or within the normal cache window;
+          // "stale" = the live provider was unavailable and this used a
+          // recent-but-expired cached price instead - never presented as
+          // current/live (see CachingCryptoPriceProvider).
+          priceAge: stale ? 'stale' : 'fresh',
           from: moneyRequest.from.code,
           to: moneyRequest.to.code,
           amount: moneyRequest.amount,
