@@ -17,23 +17,45 @@ const CURRENCY_CODES = new Set([
 // not an exhaustive currency-name dictionary (that's AI's job for anything
 // this doesn't cover; this only needs to catch the obvious cases so they
 // never reach AI, which must never supply a rate anyway).
+//
+// "dollar" alone defaults to USD (the common/global interpretation); a
+// clearly-specified national dollar (Australian/Canadian/Singapore/Hong
+// Kong) maps to its own code instead - checked as a distinct, more specific
+// key, so it isn't shadowed by the bare "dollar" entry.
 const CURRENCY_NAME_ALIASES: Record<string, string> = {
   baht: 'THB',
   'thai baht': 'THB',
+  'บาท': 'THB',
   dollar: 'USD',
   dollars: 'USD',
   'us dollar': 'USD',
   'us dollars': 'USD',
+  'ดอลลาร์': 'USD',
+  'ดอลล่าร์': 'USD',
+  'ดอลลาร์สหรัฐ': 'USD',
+  'australian dollar': 'AUD',
+  'australian dollars': 'AUD',
+  'canadian dollar': 'CAD',
+  'canadian dollars': 'CAD',
+  'singapore dollar': 'SGD',
+  'singapore dollars': 'SGD',
+  'hong kong dollar': 'HKD',
+  'hong kong dollars': 'HKD',
   euro: 'EUR',
   euros: 'EUR',
+  'ยูโร': 'EUR',
   pound: 'GBP',
   pounds: 'GBP',
   sterling: 'GBP',
+  'ปอนด์': 'GBP',
   yen: 'JPY',
+  'เยน': 'JPY',
   yuan: 'CNY',
   rmb: 'CNY',
   renminbi: 'CNY',
+  'หยวน': 'CNY',
   won: 'KRW',
+  'วอน': 'KRW',
   rupee: 'INR',
   rupees: 'INR',
 };

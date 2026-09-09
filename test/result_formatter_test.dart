@@ -59,9 +59,12 @@ void main() {
     expect(formatResultDisplay(result, DecimalPlaces.two), '22.22 °C');
   });
 
-  test('very small values never fall back to scientific notation', () {
+  test('a value that would round to all-zero digits falls back to scientific notation instead of lying about the magnitude', () {
     final result = _result(value: 0.0000001234, unit: 'km');
-    expect(formatResultDisplay(result, DecimalPlaces.four), '0.0000 km');
+    // At 4 fixed decimals, 1.234e-7 rounds to 0.0000 - never show that for a
+    // real nonzero result; switch to scientific instead.
+    expect(formatResultDisplay(result, DecimalPlaces.four), '1.234e-7 km');
+    // At 8 decimals there's enough precision to show it in fixed notation.
     expect(formatResultDisplay(result, DecimalPlaces.eight), '0.00000012 km');
   });
 

@@ -3,6 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../models/conversion_result.dart';
+import '../../../services/conversion_service.dart';
+
+/// Short, user-facing label for the result's category - lets the card
+/// clearly distinguish a plain unit conversion, a calculation, and a live
+/// currency rate (see task: result UX should distinguish these at a
+/// glance). Returns null for a normal unit conversion, where no extra label
+/// is needed.
+String? _categoryLabel(String categoryId) {
+  if (categoryId == calculationCategoryId) return 'Calculation';
+  if (categoryId == 'currency') return 'Live exchange rate';
+  return null;
+}
 
 class ResultCard extends StatelessWidget {
   final ConversionResult? result;
@@ -73,6 +85,15 @@ class ResultCard extends StatelessWidget {
                 context,
               ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
+            if (_categoryLabel(r.categoryId) case final label?) ...[
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               children: [

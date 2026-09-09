@@ -1,3 +1,4 @@
+import '../domain/conversion_engine.dart';
 import '../models/conversion_result.dart';
 import 'settings_service.dart';
 
@@ -17,9 +18,6 @@ String formatResultDisplay(
   final digits = decimalPlaces.fixedDigits;
   if (digits == null) return result.displayText;
 
-  final value = result.value;
-  final formatted = (value.isNaN || value.isInfinite)
-      ? value.toString()
-      : value.toStringAsFixed(digits);
+  final formatted = ConversionEngine.formatFixed(result.value, digits);
   return '$formatted ${result.unit}';
 }

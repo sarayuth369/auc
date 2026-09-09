@@ -219,8 +219,8 @@ void main() {
       expect(await convertText('10 km = m ?'), '10000 m');
     });
 
-    test('"10 nm = m" (short syntax + SI prefix, rounds to 5 decimals like any other unit)', () async {
-      expect(await convertText('10 nm = m'), '0 m');
+    test('"10 nm = m" (short syntax + SI prefix; never shown as "0" - falls back to scientific notation)', () async {
+      expect(await convertText('10 nm = m'), '1e-8 m');
     });
 
     test('Thai abbreviation "กม" for kilometer', () async {
@@ -261,6 +261,90 @@ void main() {
 
     test('short syntax + compound unit: "10 km/h = m/s"', () async {
       expect(await convertText('10 km/h = m/s'), '2.77778 m/s');
+    });
+  });
+
+  group('pure calculator mode (stability hardening)', () {
+    test('addition: "10+2" and "10 + 2"', () async {
+      expect(await convertText('10+2'), '12');
+      expect(await convertText('10 + 2'), '12');
+    });
+
+    test('subtraction: "10-2" and "10 - 2"', () async {
+      expect(await convertText('10-2'), '8');
+      expect(await convertText('10 - 2'), '8');
+    });
+
+    test('multiplication: "10*2", "10 * 2", "5.5*2"', () async {
+      expect(await convertText('10*2'), '20');
+      expect(await convertText('10 * 2'), '20');
+      expect(await convertText('5.5*2'), '11');
+    });
+
+    test('division: "10/2", "10 / 2", "100/8"', () async {
+      expect(await convertText('10/2'), '5');
+      expect(await convertText('10 / 2'), '5');
+      expect(await convertText('100/8'), '12.5');
+    });
+
+    test('"10/3" shows up to 5 meaningful decimals, no trailing zeros', () async {
+      expect(await convertText('10/3'), '3.33333');
+    });
+
+    test('division by zero is rejected cleanly, never Infinity/NaN', () async {
+      expect(() => service.convert('10/0'), throwsA(isA<ConversionException>()));
+    });
+
+    test('the result is tagged as a calculation, not a unit conversion', () async {
+      final result = await service.convert('10 + 2');
+      expect(result.categoryId, 'calculation');
+      expect(result.unit, '');
+      expect(result.displayText, '12'); // no dangling unit/space
+    });
+
+    test('a unit-attached expression is NOT pure-calculator mode - it converts normally', () async {
+      final result = await service.convert('10/2 km to m');
+      expect(result.categoryId, isNot('calculation'));
+      expect(result.displayText, '5000 m');
+    });
+  });
+
+  group('Thai abbreviations (stability hardening)', () {
+    test('10 กม = ม (kilometer -> meter)', () async {
+      expect(await convertText('10 กม = ม'), '10000 m');
+    });
+
+    test('10 กก = ก (kilogram -> gram)', () async {
+      expect(await convertText('10 กก = ก'), '10000 g');
+    });
+
+    test('10 ก = กก (gram -> kilogram)', () async {
+      expect(await convertText('10 ก = กก'), '0.01 kg');
+    });
+
+    test('10 ตรว = ตรม (square wah -> square meter)', () async {
+      expect(await convertText('10 ตรว = ตรม'), '40 m²');
+    });
+
+    test('10 ตรม = ตรว (square meter -> square wah)', () async {
+      expect(await convertText('10 ตรม = ตรว'), '2.5 wah²');
+    });
+
+    test('10 ม = ซม (meter -> centimeter)', () async {
+      expect(await convertText('10 ม = ซม'), '1000 cm');
+    });
+  });
+
+  group('scientific prefixes (stability hardening)', () {
+    test('1/10/100 nm -> m never show as "0" (scientific notation instead)', () async {
+      expect(await convertText('1 nm to m'), '1e-9 m');
+      expect(await convertText('10 nm to m'), '1e-8 m');
+      expect(await convertText('100 nm to m'), '1e-7 m');
+    });
+
+    test('1 km -> m and 1 pm -> m (large/small, plain vs scientific as appropriate)', () async {
+      expect(await convertText('1 km to m'), '1000 m');
+      expect(await convertText('1 pm to m'), '1e-12 m');
     });
   });
 

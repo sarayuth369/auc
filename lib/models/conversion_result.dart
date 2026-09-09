@@ -16,6 +16,8 @@ class ConversionResult {
     DateTime? timestamp,
   }) : timestamp = timestamp ?? DateTime.now();
 
-  /// Short human-readable form, e.g. "6.21371 mile".
-  String get displayText => '$formattedValue $unit';
+  /// Short human-readable form, e.g. "6.21371 mile". A pure calculation
+  /// result has no unit at all (see [calculationCategoryId]); the trailing
+  /// space is omitted rather than shown dangling.
+  String get displayText => unit.isEmpty ? formattedValue : '$formattedValue $unit';
 }

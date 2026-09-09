@@ -360,6 +360,34 @@ void main() {
       }
     });
 
+    test('currency precision: shows 4 meaningful decimals instead of rounding to 2 (stability hardening)', () async {
+      final client = MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'intent': 'currency_convert',
+            'from': 'THB',
+            'to': 'USD',
+            'amount': 10,
+            'rate': 0.03214,
+            'result': 0.3214,
+            'asOf': '2026-09-09T00:00:00.000Z',
+          }),
+          200,
+        );
+      });
+      final service = RemoteAiResolverService(baseUrl: 'https://example.test', client: client);
+
+      try {
+        await service.resolveIntent('10 THB = USD');
+        fail('expected CurrencyResolvedException');
+      } on CurrencyResolvedException catch (e) {
+        // At the old 2-decimal precision this would have rounded to "0.32",
+        // losing meaningful precision for a small currency amount.
+        expect(e.result.displayText, '0.3214 USD');
+      }
+    });
+
     test('a malformed currency_convert response throws a plain ConversionException', () async {
       final client = MockClient((request) async {
         return http.Response(jsonEncode({'success': true, 'intent': 'currency_convert'}), 200);

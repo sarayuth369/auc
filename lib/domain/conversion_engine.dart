@@ -113,10 +113,24 @@ class ConversionEngine {
 
   /// Rounds to [maxDecimals] and trims trailing zeros for a clean display,
   /// e.g. 6.211371192 -> "6.21371", 5600.0 -> "5600".
+  ///
+  /// A nonzero value that would round away to "0" at [maxDecimals] (e.g.
+  /// 1e-8 at the default 5 decimals) switches to scientific notation instead
+  /// - silently showing "0" for a real, nonzero result is never acceptable,
+  /// regardless of which category/unit produced it. This is the single
+  /// formatter every category (unit conversion, currency, calculator)
+  /// shares, so the "never show 0 for a nonzero value" guarantee holds
+  /// everywhere consistently, generically - not a per-unit special case.
   static String formatNumber(double value, {int maxDecimals = 5}) {
     if (value.isNaN || value.isInfinite) return value.toString();
+    if (value == 0) return '0';
+
     final factor = math.pow(10, maxDecimals).toDouble();
     final rounded = (value * factor).round() / factor;
+
+    if (rounded == 0) {
+      return _formatScientific(value);
+    }
     if (rounded == rounded.roundToDouble()) {
       return rounded.toStringAsFixed(0);
     }
@@ -124,5 +138,35 @@ class ConversionEngine {
     s = s.replaceAll(RegExp(r'0+$'), '');
     s = s.replaceAll(RegExp(r'\.$'), '');
     return s;
+  }
+
+  /// Same "never show 0 for a nonzero value" guarantee as [formatNumber],
+  /// but for the Settings "fixed decimal places" mode (trailing zeros kept,
+  /// e.g. "0.00" instead of "0") - used by `formatResultDisplay`. A value
+  /// that rounds to all-zero digits at [digits] still falls back to
+  /// scientific notation rather than lying about the magnitude.
+  static String formatFixed(double value, int digits) {
+    if (value.isNaN || value.isInfinite) return value.toString();
+    if (value == 0) return value.toStringAsFixed(digits);
+
+    final factor = math.pow(10, digits).toDouble();
+    final rounded = (value * factor).round() / factor;
+    if (rounded == 0) return _formatScientific(value);
+    return rounded.toStringAsFixed(digits);
+  }
+
+  /// Clean "1.23e-8" style scientific notation, using Dart's own correct
+  /// double-to-exponential conversion (avoids float-precision edge cases a
+  /// manual log10/exponent calculation could get wrong right at a power of
+  /// ten) with trailing zeros trimmed from the mantissa.
+  static String _formatScientific(double value) {
+    final exponential = value.toStringAsExponential(5); // e.g. "1.00000e-8"
+    final parts = exponential.split('e');
+    var mantissa = parts[0];
+    if (mantissa.contains('.')) {
+      mantissa = mantissa.replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+    }
+    final exponent = int.parse(parts[1]);
+    return '${mantissa}e$exponent';
   }
 }

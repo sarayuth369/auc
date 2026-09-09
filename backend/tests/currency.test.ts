@@ -24,6 +24,27 @@ describe('resolveCurrencyCode', () => {
     expect(resolveCurrencyCode('kilometer')).toBeNull();
     expect(resolveCurrencyCode('')).toBeNull();
   });
+
+  it('recognizes full-word Thai currency names', () => {
+    expect(resolveCurrencyCode('บาท')).toBe('THB');
+    expect(resolveCurrencyCode('ดอลลาร์')).toBe('USD');
+    expect(resolveCurrencyCode('ดอลล่าร์')).toBe('USD');
+    expect(resolveCurrencyCode('ดอลลาร์สหรัฐ')).toBe('USD');
+    expect(resolveCurrencyCode('ยูโร')).toBe('EUR');
+    expect(resolveCurrencyCode('หยวน')).toBe('CNY');
+    expect(resolveCurrencyCode('เยน')).toBe('JPY');
+    expect(resolveCurrencyCode('วอน')).toBe('KRW');
+    expect(resolveCurrencyCode('ปอนด์')).toBe('GBP');
+  });
+
+  it('disambiguates a clearly-specified national dollar instead of defaulting to USD', () => {
+    expect(resolveCurrencyCode('Australian dollar')).toBe('AUD');
+    expect(resolveCurrencyCode('Canadian dollars')).toBe('CAD');
+    expect(resolveCurrencyCode('Singapore dollar')).toBe('SGD');
+    expect(resolveCurrencyCode('Hong Kong dollar')).toBe('HKD');
+    // A bare "dollar" with no country still defaults to the common USD reading.
+    expect(resolveCurrencyCode('dollar')).toBe('USD');
+  });
 });
 
 describe('extractCurrencyRequest', () => {
@@ -58,6 +79,27 @@ describe('extractCurrencyRequest', () => {
 
   it('returns null when there is no connector', () => {
     expect(extractCurrencyRequest('100 USD THB')).toBeNull();
+  });
+
+  it('extracts full-word Thai currency requests: "100 บาท = ดอลลาร์"', () => {
+    expect(extractCurrencyRequest('100 บาท = ดอลลาร์')).toEqual({ amount: 100, from: 'THB', to: 'USD' });
+  });
+
+  it('extracts "10 ดอลลาร์ = บาท" (reverse direction)', () => {
+    expect(extractCurrencyRequest('10 ดอลลาร์ = บาท')).toEqual({ amount: 10, from: 'USD', to: 'THB' });
+  });
+
+  it('extracts with no spaces around the number/currency/connector: "100บาท=ดอลลาร์"', () => {
+    expect(extractCurrencyRequest('100บาท=ดอลลาร์')).toEqual({ amount: 100, from: 'THB', to: 'USD' });
+  });
+
+  it('extracts "100 หยวน = บาท" and "100 เยน = บาท"', () => {
+    expect(extractCurrencyRequest('100 หยวน = บาท')).toEqual({ amount: 100, from: 'CNY', to: 'THB' });
+    expect(extractCurrencyRequest('100 เยน = บาท')).toEqual({ amount: 100, from: 'JPY', to: 'THB' });
+  });
+
+  it('extracts "10 ยูโร = ดอลลาร์"', () => {
+    expect(extractCurrencyRequest('10 ยูโร = ดอลลาร์')).toEqual({ amount: 10, from: 'EUR', to: 'USD' });
   });
 });
 

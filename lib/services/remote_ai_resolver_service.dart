@@ -135,7 +135,10 @@ class RemoteAiResolverService implements AiResolverService {
       inputText: inputText,
       value: result.toDouble(),
       unit: to,
-      formattedValue: ConversionEngine.formatNumber(result.toDouble(), maxDecimals: 2),
+      // 4 decimals so small currency conversions (e.g. 10 THB -> a fraction
+      // of a USD) still show meaningful precision instead of rounding away
+      // to a near-useless 2-decimal figure.
+      formattedValue: ConversionEngine.formatNumber(result.toDouble(), maxDecimals: 4),
       categoryId: 'currency',
     );
   }

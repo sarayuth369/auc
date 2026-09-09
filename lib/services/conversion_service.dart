@@ -3,6 +3,11 @@ import '../domain/conversion_exception.dart';
 import '../models/ai_intent.dart';
 import '../models/conversion_result.dart';
 import 'ai_resolver_service.dart';
+import 'arithmetic_evaluator.dart';
+
+/// Category marker used by the Home screen to show "Calculation" instead of
+/// a unit, for a bare arithmetic result with no target unit at all.
+const String calculationCategoryId = 'calculation';
 
 /// Top-level facade the UI talks to: text in, [ConversionResult] out.
 ///
@@ -28,6 +33,22 @@ class ConversionService {
   });
 
   Future<ConversionResult> convert(String input) async {
+    // Pure calculator mode: input is nothing but one arithmetic expression,
+    // no unit at all (e.g. "10+2", "10 / 2"). This never touches the Unit
+    // Registry/AI resolver - it's checked first, locally, deterministically.
+    // A conversion request that merely STARTS with arithmetic before a unit
+    // ("10/2 km") is handled separately, inside LocalParser.
+    final calculation = ArithmeticEvaluator.tryWhole(input);
+    if (calculation != null) {
+      return ConversionResult(
+        inputText: input.trim(),
+        value: calculation,
+        unit: '',
+        formattedValue: ConversionEngine.formatNumber(calculation),
+        categoryId: calculationCategoryId,
+      );
+    }
+
     AiIntent intent;
     try {
       intent = await aiResolverService.resolveIntent(input);

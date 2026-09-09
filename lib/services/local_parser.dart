@@ -1,5 +1,6 @@
 import '../domain/conversion_exception.dart';
 import '../models/ai_intent.dart';
+import 'arithmetic_evaluator.dart';
 
 /// Deterministic, offline natural-language parser.
 ///
@@ -47,20 +48,6 @@ class LocalParser {
     r'''(-?\d+(?:\.\d+)?)\s*([a-zA-Z฀-๿°'"/]+(?:\s+[a-zA-Z฀-๿]+){0,2})''',
   );
 
-  // A leading arithmetic expression before any unit letters, e.g. "10/2" in
-  // "10/2 km" or "10 * 2" in "10 * 2 kg" - with or without surrounding
-  // whitespace. +, *, / are unambiguous either way (never valid immediately
-  // after a number in a unit token); "-" additionally requires whitespace
-  // on both sides because a tight "10-2" is indistinguishable from the
-  // number 10 followed by a separate negative-number item (e.g. a
-  // hypothetical multi-item list).
-  static final RegExp _unambiguousArithmetic = RegExp(
-    r'^\s*(-?\d+(?:\.\d+)?)\s*([*/+])\s*(-?\d+(?:\.\d+)?)',
-  );
-  static final RegExp _spacedMinusArithmetic = RegExp(
-    r'^\s*(-?\d+(?:\.\d+)?)\s+(-)\s+(-?\d+(?:\.\d+)?)',
-  );
-
   AiIntent parse(String input) {
     final text = input.trim();
     if (text.isEmpty) {
@@ -105,41 +92,15 @@ class LocalParser {
     return AiIntent(intent: 'convert', items: items, targetUnit: right);
   }
 
-  /// Reduces a leading arithmetic expression (see [_unambiguousArithmetic] /
-  /// [_spacedMinusArithmetic]) to its computed value, e.g. "10/2 km"
-  /// -> "5 km". Deterministic arithmetic only - never sent to AI. Only the
-  /// FIRST such expression at the very start of [source] is reduced (a
-  /// single quantity, not a general calculator), leaving the rest of the
-  /// string (the unit) untouched for the normal pair extraction above.
+  /// Reduces a leading arithmetic expression (see [ArithmeticEvaluator]) to
+  /// its computed value, e.g. "10/2 km" -> "5 km". Deterministic arithmetic
+  /// only - never sent to AI. Only the FIRST such expression at the very
+  /// start of [source] is reduced (a single quantity, not a general
+  /// calculator), leaving the rest of the string (the unit) untouched for
+  /// the normal pair extraction above.
   String _resolveArithmetic(String source) {
-    final match = _unambiguousArithmetic.firstMatch(source) ?? _spacedMinusArithmetic.firstMatch(source);
+    final match = ArithmeticEvaluator.tryLeading(source);
     if (match == null) return source;
-
-    final left = double.tryParse(match.group(1)!);
-    final op = match.group(2)!;
-    final right = double.tryParse(match.group(3)!);
-    if (left == null || right == null) return source;
-
-    double? result;
-    switch (op) {
-      case '+':
-        result = left + right;
-        break;
-      case '-':
-        result = left - right;
-        break;
-      case '*':
-        result = left * right;
-        break;
-      case '/':
-        if (right == 0) {
-          throw const ConversionException('Cannot divide by zero.');
-        }
-        result = left / right;
-        break;
-    }
-    if (result == null) return source;
-
-    return result.toString() + source.substring(match.end);
+    return match.value.toString() + source.substring(match.consumedLength);
   }
 }
