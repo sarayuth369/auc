@@ -20,14 +20,20 @@ class ConversionEngine {
 
     final targetUnit = repository.resolve(intent.targetUnit);
     if (targetUnit == null) {
-      throw UnknownUnitException('Unknown unit: "${intent.targetUnit}".');
+      throw UnknownUnitException(
+        'Unknown unit: "${intent.targetUnit}". '
+        'Try a common name or abbreviation, e.g. "km", "kg", "m/s".',
+      );
     }
 
     final resolvedItems = <UnitDefinition>[];
     for (final item in intent.items) {
       final unit = repository.resolve(item.unit);
       if (unit == null) {
-        throw UnknownUnitException('Unknown unit: "${item.unit}".');
+        throw UnknownUnitException(
+          'Unknown unit: "${item.unit}". '
+          'Try a common name or abbreviation, e.g. "km", "kg", "m/s".',
+        );
       }
       if (unit.categoryId != targetUnit.categoryId) {
         throw ConversionException(

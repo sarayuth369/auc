@@ -305,4 +305,68 @@ void main() {
       },
     );
   });
+
+  group('currency responses (stability hardening)', () {
+    test('a "currency_convert" response throws CurrencyResolvedException, not a normal AiIntent', () async {
+      final client = MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'intent': 'currency_convert',
+            'from': 'THB',
+            'to': 'USD',
+            'amount': 100,
+            'rate': 0.0287,
+            'result': 2.87,
+            'asOf': '2026-09-09T00:00:00.000Z',
+          }),
+          200,
+        );
+      });
+      final service = RemoteAiResolverService(baseUrl: 'https://example.test', client: client);
+
+      await expectLater(
+        service.resolveIntent('100 THB = USD'),
+        throwsA(isA<CurrencyResolvedException>()),
+      );
+    });
+
+    test('the carried ConversionResult reflects exactly the backend-computed value', () async {
+      final client = MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'intent': 'currency_convert',
+            'from': 'THB',
+            'to': 'USD',
+            'amount': 100,
+            'rate': 0.0287,
+            'result': 2.87,
+            'asOf': '2026-09-09T00:00:00.000Z',
+          }),
+          200,
+        );
+      });
+      final service = RemoteAiResolverService(baseUrl: 'https://example.test', client: client);
+
+      try {
+        await service.resolveIntent('100 THB = USD');
+        fail('expected CurrencyResolvedException');
+      } on CurrencyResolvedException catch (e) {
+        expect(e.result.value, 2.87);
+        expect(e.result.unit, 'USD');
+        expect(e.result.categoryId, 'currency');
+        expect(e.result.displayText, '2.87 USD');
+      }
+    });
+
+    test('a malformed currency_convert response throws a plain ConversionException', () async {
+      final client = MockClient((request) async {
+        return http.Response(jsonEncode({'success': true, 'intent': 'currency_convert'}), 200);
+      });
+      final service = RemoteAiResolverService(baseUrl: 'https://example.test', client: client);
+
+      await expectLater(service.resolveIntent('100 THB = USD'), throwsA(isA<ConversionException>()));
+    });
+  });
 }

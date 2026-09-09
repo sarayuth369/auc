@@ -680,4 +680,91 @@ describe('resolveConversion', () => {
     expect(result.status).toBe(200);
     expect(result.body).toMatchObject({ success: true });
   });
+
+  describe('currency (deterministic, never sent to AI)', () => {
+    const fakeRateProvider = { getRate: async (from: string, to: string) => (from === 'THB' && to === 'USD' ? 0.0287 : 1) };
+
+    it('42. "100 THB = USD" resolves using the injected rate, without ever calling AI', async () => {
+      const fetchImpl = fetchThrowing('AI must not be called for a currency request');
+      const result = await resolveConversion(
+        { text: '100 THB = USD' },
+        env,
+        { fetchImpl, currencyRateProvider: fakeRateProvider },
+      );
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({
+        success: true,
+        intent: 'currency_convert',
+        from: 'THB',
+        to: 'USD',
+        amount: 100,
+        rate: 0.0287,
+        result: 2.87,
+      });
+    });
+
+    it('43. "10 CNY to THB" also short-circuits before AI', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      const cnyProvider = { getRate: async () => 4.5 };
+      const result = await resolveConversion(
+        { text: '10 CNY to THB' },
+        env,
+        { fetchImpl, currencyRateProvider: cnyProvider },
+      );
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: true, intent: 'currency_convert', from: 'CNY', to: 'THB', result: 45 });
+    });
+
+    it('44. the numeric result always equals amount * the provider-supplied rate - AI never supplies it', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      const preciseProvider = { getRate: async () => 0.029123456 };
+      const result = await resolveConversion(
+        { text: '250 THB = USD' },
+        env,
+        { fetchImpl, currencyRateProvider: preciseProvider },
+      );
+      expect((result.body as { result: number }).result).toBeCloseTo(250 * 0.029123456, 10);
+    });
+
+    it('45. an unavailable FX provider returns a controlled CURRENCY_UNAVAILABLE error, never a fabricated result', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      const failingProvider = {
+        getRate: async () => {
+          throw new (await import('../src/currency')).CurrencyRateUnavailableError('down');
+        },
+      };
+      const result = await resolveConversion(
+        { text: '100 THB = USD' },
+        env,
+        { fetchImpl, currencyRateProvider: failingProvider },
+      );
+      expect(result.status).toBe(502);
+      expect(result.body).toMatchObject({ success: false, error: { code: 'CURRENCY_UNAVAILABLE' } });
+    });
+
+    it('46. an unrecognized currency-like request still falls through to AI unaffected', async () => {
+      const fetchImpl = fetchReturning(
+        geminiOk({ intent: 'convert', language: 'en', items: [{ value: 10, unit: 'kilometer' }], target_unit: 'mile' }),
+      );
+      const result = await resolveConversion(
+        { text: '10 km to miles' },
+        env,
+        { fetchImpl, currencyRateProvider: fakeRateProvider },
+      );
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: true, intent: 'convert' });
+    });
+
+    it('47. same-currency request resolves to a 1:1 rate, still via the pipeline, never AI', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      const identityProvider = { getRate: async (from: string, to: string) => (from === to ? 1 : 0) };
+      const result = await resolveConversion(
+        { text: '100 USD = USD' },
+        env,
+        { fetchImpl, currencyRateProvider: identityProvider },
+      );
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ result: 100, rate: 1 });
+    });
+  });
 });

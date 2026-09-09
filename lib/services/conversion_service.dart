@@ -45,7 +45,15 @@ class ConversionService {
   }
 
   Future<ConversionResult> _convertViaRemote(String input) async {
-    final remoteIntent = await remoteAiResolverService!.resolveIntent(input);
-    return conversionEngine.compute(remoteIntent, inputText: input.trim());
+    try {
+      final remoteIntent = await remoteAiResolverService!.resolveIntent(input);
+      return conversionEngine.compute(remoteIntent, inputText: input.trim());
+    } on CurrencyResolvedException catch (e) {
+      // Currency is a separate category: the backend already computed the
+      // final value from a real fetched exchange rate (never AI) - it never
+      // goes through the Unit Registry/ConversionEngine, which has no
+      // concept of a currency or a live rate.
+      return e.result;
+    }
   }
 }

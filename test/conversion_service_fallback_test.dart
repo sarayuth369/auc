@@ -4,6 +4,7 @@ import 'package:auc/data/unit_repository.dart';
 import 'package:auc/domain/conversion_engine.dart';
 import 'package:auc/domain/conversion_exception.dart';
 import 'package:auc/models/ai_intent.dart';
+import 'package:auc/models/conversion_result.dart';
 import 'package:auc/services/ai_resolver_service.dart';
 import 'package:auc/services/conversion_service.dart';
 
@@ -269,4 +270,30 @@ void main() {
       );
     },
   );
+
+  group('currency (stability hardening): a separate category, never through ConversionEngine', () {
+    test('a CurrencyResolvedException from the remote resolver is returned directly, not computed locally', () async {
+      final remote = _FakeAiResolver((_) async {
+        throw CurrencyResolvedException(
+          ConversionResult(
+            inputText: '100 THB = USD',
+            value: 2.87,
+            unit: 'USD',
+            formattedValue: '2.87',
+            categoryId: 'currency',
+          ),
+        );
+      });
+      final service = ConversionService(
+        aiResolverService: MockAiResolverService(), // LocalParser has no currency category -> UnknownUnitException -> falls back
+        conversionEngine: ConversionEngine(repository),
+        remoteAiResolverService: remote,
+      );
+
+      final result = await service.convert('100 THB = USD');
+      expect(result.displayText, '2.87 USD');
+      expect(result.categoryId, 'currency');
+      expect(remote.callCount, 1);
+    });
+  });
 }

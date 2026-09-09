@@ -4,8 +4,10 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
+import '../domain/conversion_engine.dart';
 import '../domain/conversion_exception.dart';
 import '../models/ai_intent.dart';
+import '../models/conversion_result.dart';
 import 'ai_config_service.dart';
 import 'ai_resolver_service.dart';
 
@@ -91,6 +93,9 @@ class RemoteAiResolverService implements AiResolverService {
     }
 
     if (body['success'] == true) {
+      if (body['intent'] == 'currency_convert') {
+        throw CurrencyResolvedException(_parseCurrencyResult(body, input));
+      }
       return _parseSuccess(body);
     }
 
@@ -110,6 +115,28 @@ class RemoteAiResolverService implements AiResolverService {
 
     throw const ConversionException(
       'The AI resolver could not understand this input.',
+    );
+  }
+
+  /// Builds the already-computed [ConversionResult] for a currency response
+  /// - see [CurrencyResolvedException]. The rate/result numbers came from
+  /// the backend's real FX provider (never AI); this only validates shape
+  /// and formats for display, exactly like [ConversionEngine.formatNumber]
+  /// does for every other category.
+  ConversionResult _parseCurrencyResult(Map<String, dynamic> body, String inputText) {
+    final to = body['to'];
+    final result = body['result'];
+    if (to is! String || to.trim().isEmpty || result is! num) {
+      throw const ConversionException(
+        'The AI resolver returned a malformed currency result.',
+      );
+    }
+    return ConversionResult(
+      inputText: inputText,
+      value: result.toDouble(),
+      unit: to,
+      formattedValue: ConversionEngine.formatNumber(result.toDouble(), maxDecimals: 2),
+      categoryId: 'currency',
     );
   }
 

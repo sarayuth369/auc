@@ -6,7 +6,8 @@ export type ErrorCode =
   | 'RATE_LIMITED'
   | 'NEEDS_CLARIFICATION'
   | 'UNSUPPORTED_CONVERSION'
-  | 'NOT_IMPLEMENTED';
+  | 'NOT_IMPLEMENTED'
+  | 'CURRENCY_UNAVAILABLE';
 
 export interface ErrorBody {
   success: false;

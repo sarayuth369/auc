@@ -260,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onSubmitted: (_) => _convert(),
                 decoration: InputDecoration(
                   labelText: widget.convertPlaceholder,
-                  hintText: 'e.g. 10 km to miles',
+                  hintText: 'e.g. 10 km = m, 100 THB = USD',
                   border: const OutlineInputBorder(),
                 ),
               ),

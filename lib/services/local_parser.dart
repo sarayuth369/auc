@@ -5,6 +5,8 @@ import '../models/ai_intent.dart';
 ///
 /// Understands patterns like:
 ///   "10 km to miles"
+///   "10 km = m"
+///   "10 km = m ?"
 ///   "72 F to C"
 ///   "5 feet 8 inches to cm"
 ///   "3 rai 2 ngan to square meters"
@@ -14,29 +16,49 @@ import '../models/ai_intent.dart';
 ///   "1 กิโลกรัม เท่ากับกี่ออนซ์"
 ///   "1 กิโลกรัม แปลงเป็นออนซ์"
 ///   "1 กิโลกรัม กี่ออนซ์"
+///   "10/2 km = m" (arithmetic resolved before unit lookup)
+///   "10 kilometer per hour to m/s" (multi-word compound alias)
 ///
-/// This never guesses unit meaning - it only extracts numbers and the
-/// literal words around them (Thai script included). Unit resolution
-/// happens later in [UnitRepository]; actual math happens in
-/// [ConversionEngine].
+/// This never guesses unit meaning - it only extracts numbers/expressions
+/// and the literal words around them (Thai script included). Unit
+/// resolution happens later in [UnitRepository]; actual math (both the
+/// arithmetic reduction below and the unit conversion) is deterministic
+/// code, never AI.
 class LocalParser {
-  // English "to" (word boundary) or a Thai connector phrase: "เป็นกี่"
-  // ("is how many"), "เท่ากับกี่" ("equals how many"), "แปลงเป็น" ("convert
-  // to"), or bare "กี่" ("how many"). Thai script has no \w-based word
-  // boundary in Dart's regex engine, so these are matched as plain literals;
-  // longer/more specific phrases are listed first, though regex's
-  // leftmost-match rule means order only matters for documentation clarity
-  // here (each phrase starts at a distinct position in real input).
+  // English "to"/"=" /"→" (word boundary where relevant) or a Thai connector
+  // phrase: "เป็นกี่" ("is how many"), "เท่ากับกี่" ("equals how many"),
+  // "แปลงเป็น" ("convert to"), or bare "กี่" ("how many"). Thai script has no
+  // \w-based word boundary in Dart's regex engine, so these are matched as
+  // plain literals; longer/more specific phrases are listed first, though
+  // regex's leftmost-match rule means order only matters for documentation
+  // clarity here (each phrase starts at a distinct position in real input).
   static final RegExp _toSplitter = RegExp(
-    r'\bto\b|เท่ากับกี่|เป็นกี่|แปลงเป็น|กี่',
+    r'\bto\b|=|→|เท่ากับกี่|เป็นกี่|แปลงเป็น|กี่',
     caseSensitive: false,
   );
 
   // Unit tokens may be Latin letters, Thai script (U+0E00-U+0E7F), the
   // degree sign, quote marks (for ' / " feet-inches shorthand), or a slash
-  // (for compound units like "BTU/h", "km/h").
+  // (for compound units like "BTU/h", "km/h"). Up to two extra
+  // space-separated words are allowed so 3-word compound aliases like
+  // "kilometer per hour" / "meters per second" are captured whole instead
+  // of being truncated to the first two words.
   static final RegExp _pairPattern = RegExp(
-    r'''(-?\d+(?:\.\d+)?)\s*([a-zA-Z฀-๿°'"/]+(?:\s+[a-zA-Z฀-๿]+)?)''',
+    r'''(-?\d+(?:\.\d+)?)\s*([a-zA-Z฀-๿°'"/]+(?:\s+[a-zA-Z฀-๿]+){0,2})''',
+  );
+
+  // A leading arithmetic expression before any unit letters, e.g. "10/2" in
+  // "10/2 km" or "10 * 2" in "10 * 2 kg" - with or without surrounding
+  // whitespace. +, *, / are unambiguous either way (never valid immediately
+  // after a number in a unit token); "-" additionally requires whitespace
+  // on both sides because a tight "10-2" is indistinguishable from the
+  // number 10 followed by a separate negative-number item (e.g. a
+  // hypothetical multi-item list).
+  static final RegExp _unambiguousArithmetic = RegExp(
+    r'^\s*(-?\d+(?:\.\d+)?)\s*([*/+])\s*(-?\d+(?:\.\d+)?)',
+  );
+  static final RegExp _spacedMinusArithmetic = RegExp(
+    r'^\s*(-?\d+(?:\.\d+)?)\s+(-)\s+(-?\d+(?:\.\d+)?)',
   );
 
   AiIntent parse(String input) {
@@ -48,12 +70,19 @@ class LocalParser {
     final match = _toSplitter.firstMatch(text);
     if (match == null) {
       throw const ConversionException(
-        'Could not understand input. Try e.g. "10 km to miles".',
+        'Could not understand input. Try e.g. "10 km to miles" or "10 km = m".',
       );
     }
 
-    final left = text.substring(0, match.start);
-    final right = text.substring(match.end).trim();
+    final left = _resolveArithmetic(text.substring(0, match.start));
+    final right = text
+        .substring(match.end)
+        .trim()
+        // Trailing "?" (ASCII or full-width) is a natural way to end a
+        // short command ("10 km = m ?") and carries no meaning for the
+        // target unit itself.
+        .replaceAll(RegExp(r'[?？]+$'), '')
+        .trim();
 
     if (right.isEmpty) {
       throw const ConversionException('Missing target unit after "to".');
@@ -74,5 +103,43 @@ class LocalParser {
     }
 
     return AiIntent(intent: 'convert', items: items, targetUnit: right);
+  }
+
+  /// Reduces a leading arithmetic expression (see [_unambiguousArithmetic] /
+  /// [_spacedMinusArithmetic]) to its computed value, e.g. "10/2 km"
+  /// -> "5 km". Deterministic arithmetic only - never sent to AI. Only the
+  /// FIRST such expression at the very start of [source] is reduced (a
+  /// single quantity, not a general calculator), leaving the rest of the
+  /// string (the unit) untouched for the normal pair extraction above.
+  String _resolveArithmetic(String source) {
+    final match = _unambiguousArithmetic.firstMatch(source) ?? _spacedMinusArithmetic.firstMatch(source);
+    if (match == null) return source;
+
+    final left = double.tryParse(match.group(1)!);
+    final op = match.group(2)!;
+    final right = double.tryParse(match.group(3)!);
+    if (left == null || right == null) return source;
+
+    double? result;
+    switch (op) {
+      case '+':
+        result = left + right;
+        break;
+      case '-':
+        result = left - right;
+        break;
+      case '*':
+        result = left * right;
+        break;
+      case '/':
+        if (right == 0) {
+          throw const ConversionException('Cannot divide by zero.');
+        }
+        result = left / right;
+        break;
+    }
+    if (result == null) return source;
+
+    return result.toString() + source.substring(match.end);
   }
 }

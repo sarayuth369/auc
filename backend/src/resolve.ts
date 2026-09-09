@@ -1,4 +1,6 @@
 import { CloudflareAiInvalidResponseError, CloudflareAiRequestError } from './cloudflare-ai';
+import { CachingRateProvider, CurrencyRateUnavailableError, extractCurrencyRequest, FrankfurterRateProvider } from './currency';
+import type { CurrencyRateProvider } from './currency';
 import { clarificationBody, errorBody } from './errors';
 import { DEFAULT_MODEL, GeminiInvalidResponseError, GeminiRequestError } from './gemini';
 import { findDimensionMismatch } from './dimensions';
@@ -19,7 +21,14 @@ export interface ResolveEnv extends ConfigEnv {
 
 export interface ResolveDeps {
   fetchImpl: typeof fetch;
+  /** Injectable for tests; defaults to a cached Frankfurter provider (see currency.ts). */
+  currencyRateProvider?: CurrencyRateProvider;
 }
+
+// Module-scope (persists for the Worker isolate's lifetime, same pattern as
+// ratelimit.ts's store) so the FX cache is actually shared across requests
+// instead of being rebuilt every call.
+const defaultCurrencyRateProvider = new CachingRateProvider(new FrankfurterRateProvider());
 
 export interface ResolveOutcome {
   status: number;
@@ -68,6 +77,39 @@ export async function resolveConversion(
         localMismatch.targetUnit,
         localMismatch.targetDimension,
       );
+    }
+  }
+
+  // Currency is a separate, deterministic category: never sent to AI (which
+  // must never invent an exchange rate), detected purely from recognized
+  // ISO currency codes, computed once a real rate is fetched.
+  const currencyRequest = extractCurrencyRequest(validation.text);
+  if (currencyRequest) {
+    const provider = deps.currencyRateProvider ?? defaultCurrencyRateProvider;
+    try {
+      const rate = await provider.getRate(currencyRequest.from, currencyRequest.to);
+      return {
+        status: 200,
+        body: {
+          success: true,
+          intent: 'currency_convert',
+          from: currencyRequest.from,
+          to: currencyRequest.to,
+          amount: currencyRequest.amount,
+          rate,
+          result: currencyRequest.amount * rate,
+          asOf: new Date().toISOString(),
+        },
+      };
+    } catch (err) {
+      if (err instanceof CurrencyRateUnavailableError) {
+        console.error('Currency rate unavailable:', err.message);
+        return {
+          status: 502,
+          body: errorBody('CURRENCY_UNAVAILABLE', 'Currency rates are temporarily unavailable. Please try again.'),
+        };
+      }
+      throw err;
     }
   }
 

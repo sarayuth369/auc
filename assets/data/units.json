@@ -6,7 +6,7 @@
       "base_unit": "meter",
       "units": [
         {"canonical": "meter", "symbol": "m", "aliases": ["meter", "meters", "metre", "metres", "m", "เมตร"], "factor": 1.0},
-        {"canonical": "kilometer", "symbol": "km", "aliases": ["kilometer", "kilometers", "kilometre", "kilometres", "km", "กิโลเมตร"], "factor": 1000.0},
+        {"canonical": "kilometer", "symbol": "km", "aliases": ["kilometer", "kilometers", "kilometre", "kilometres", "km", "กิโลเมตร", "กม"], "factor": 1000.0},
         {"canonical": "centimeter", "symbol": "cm", "aliases": ["centimeter", "centimeters", "centimetre", "centimetres", "cm", "เซนติเมตร", "เซน"], "factor": 0.01},
         {"canonical": "millimeter", "symbol": "mm", "aliases": ["millimeter", "millimeters", "millimetre", "millimetres", "mm", "มิลลิเมตร", "มิล"], "factor": 0.001},
         {"canonical": "micrometer", "symbol": "μm", "aliases": ["micrometer", "micrometers", "micrometre", "micrometres", "um", "μm"], "factor": 0.000001, "source": "si"},
@@ -85,6 +85,17 @@
         {"canonical": "kilometer_per_hour", "symbol": "km/h", "aliases": ["kilometer per hour", "kilometers per hour", "km/h", "kph", "kmh"], "factor": 0.2777777778},
         {"canonical": "mile_per_hour", "symbol": "mph", "aliases": ["mile per hour", "miles per hour", "mph"], "factor": 0.44704},
         {"canonical": "knot", "symbol": "kn", "aliases": ["knot", "knots", "kn"], "factor": 0.5144444444}
+      ]
+    },
+    {
+      "id": "frequency",
+      "name": "Frequency",
+      "base_unit": "hertz",
+      "units": [
+        {"canonical": "hertz", "symbol": "Hz", "aliases": ["hertz", "hz"], "factor": 1.0, "source": "si"},
+        {"canonical": "kilohertz", "symbol": "kHz", "aliases": ["kilohertz", "khz"], "factor": 1000.0, "source": "si"},
+        {"canonical": "megahertz", "symbol": "MHz", "aliases": ["megahertz", "mhz"], "factor": 1000000.0, "source": "si"},
+        {"canonical": "gigahertz", "symbol": "GHz", "aliases": ["gigahertz", "ghz"], "factor": 1000000000.0, "source": "si"}
       ]
     },
     {

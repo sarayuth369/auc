@@ -200,6 +200,68 @@ void main() {
     test('nm -> micrometers', () async {
       expect(await convertText('500 nm to micrometers'), '0.5 μm');
     });
+
+    test('MHz -> Hz', () async {
+      expect(await convertText('10 MHz to Hz'), '10000000 Hz');
+    });
+
+    test('kHz -> MHz', () async {
+      expect(await convertText('5000 kHz to MHz'), '5 MHz');
+    });
+  });
+
+  group('short "=" command syntax (stability hardening)', () {
+    test('"10 km = m"', () async {
+      expect(await convertText('10 km = m'), '10000 m');
+    });
+
+    test('"10 km = m ?" (trailing question mark)', () async {
+      expect(await convertText('10 km = m ?'), '10000 m');
+    });
+
+    test('"10 nm = m" (short syntax + SI prefix, rounds to 5 decimals like any other unit)', () async {
+      expect(await convertText('10 nm = m'), '0 m');
+    });
+
+    test('Thai abbreviation "กม" for kilometer', () async {
+      expect(await convertText('10 กม = เมตร'), '10000 m');
+    });
+  });
+
+  group('arithmetic expressions (stability hardening)', () {
+    test('"10/2 km = m" resolves the division, not a compound unit', () async {
+      expect(await convertText('10/2 km = m'), '5000 m');
+    });
+
+    test('"10 / 2 km = m" (spaced)', () async {
+      expect(await convertText('10 / 2 km = m'), '5000 m');
+    });
+
+    test('"10*2 km = m"', () async {
+      expect(await convertText('10*2 km = m'), '20000 m');
+    });
+
+    test('"10 + 2 km = m"', () async {
+      expect(await convertText('10 + 2 km = m'), '12000 m');
+    });
+  });
+
+  group('compound units (stability hardening)', () {
+    test('km/h -> m/s', () async {
+      expect(await convertText('10 km/h to m/s'), '2.77778 m/s');
+    });
+
+    test('m/s -> km/h', () async {
+      expect(await convertText('10 m/s to km/h'), '36 km/h');
+    });
+
+    test('"kilometer per hour" (3-word alias) -> m/s', () async {
+      expect(await convertText('10 kilometer per hour to m/s'), '2.77778 m/s');
+    });
+
+    test('short syntax + compound unit: "10 km/h = m/s"', () async {
+      expect(await convertText('10 km/h = m/s'), '2.77778 m/s');
+    });
   });
 
   group('dimension safety', () {
