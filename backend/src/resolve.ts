@@ -1,9 +1,11 @@
 import { CloudflareAiInvalidResponseError, CloudflareAiRequestError } from './cloudflare-ai';
 import { CachingRateProvider, FrankfurterRateProvider } from './currency';
 import type { CurrencyRateProvider } from './currency';
-import { CachingCryptoPriceProvider, CoinGeckoPriceProvider } from './crypto';
-import type { CryptoPriceProvider } from './crypto';
+import { CryptoPriceGateway } from './crypto-gateway';
+import { defaultCryptoProviders } from './crypto-providers/registry';
+import type { CryptoRateSource } from './money';
 import { detectAmbiguousMoneyRequest, extractMoneyRequest, MoneyRateUnavailableError, resolveMoneyRequest } from './money';
+import type { CryptoUnavailableReason } from './crypto';
 import { clarificationBody, errorBody } from './errors';
 import { DEFAULT_MODEL, GeminiInvalidResponseError, GeminiRequestError } from './gemini';
 import { findDimensionMismatch } from './dimensions';
@@ -26,15 +28,26 @@ export interface ResolveDeps {
   fetchImpl: typeof fetch;
   /** Injectable for tests; defaults to a cached Frankfurter provider (see currency.ts). */
   currencyRateProvider?: CurrencyRateProvider;
-  /** Injectable for tests; defaults to a cached CoinGecko provider (see crypto.ts). */
-  cryptoPriceProvider?: CryptoPriceProvider;
+  /** Injectable for tests; defaults to the multi-provider CryptoPriceGateway (see crypto-gateway.ts). */
+  cryptoPriceProvider?: CryptoRateSource;
 }
 
 // Module-scope (persists for the Worker isolate's lifetime, same pattern as
-// ratelimit.ts's store) so the FX/price caches are actually shared across
-// requests instead of being rebuilt every call.
+// ratelimit.ts's store) so the FX/price caches and provider health/cooldown
+// state are actually shared across requests instead of being rebuilt every
+// call.
 const defaultCurrencyRateProvider = new CachingRateProvider(new FrankfurterRateProvider());
-const defaultCryptoPriceProvider = new CachingCryptoPriceProvider(new CoinGeckoPriceProvider());
+export const defaultCryptoPriceProvider = new CryptoPriceGateway(defaultCryptoProviders());
+
+const CRYPTO_ERROR_MESSAGES: Record<CryptoUnavailableReason, string> = {
+  RATE_LIMITED: 'Crypto prices are temporarily busy. Please try again shortly.',
+  TIMEOUT: 'Crypto price service is temporarily unavailable. Please try again.',
+  UNSUPPORTED_ASSET: 'This asset is not currently supported for live pricing.',
+  NO_MARKET_PAIR: 'A live price for this pair is not currently available.',
+  INVALID_PROVIDER_RESPONSE: 'Crypto prices are temporarily unavailable. Please try again.',
+  NETWORK_ERROR: 'Crypto prices are temporarily unavailable. Please try again.',
+  NO_PROVIDER_AVAILABLE: 'Live exchange rates or crypto prices are temporarily unavailable. Please try again.',
+};
 
 export interface ResolveOutcome {
   status: number;
@@ -124,13 +137,10 @@ export async function resolveConversion(
       };
     } catch (err) {
       if (err instanceof MoneyRateUnavailableError) {
-        console.error('Money rate/price unavailable:', err.message);
+        console.error('Money rate/price unavailable:', err.reason, err.message);
         return {
           status: 502,
-          body: errorBody(
-            'CURRENCY_UNAVAILABLE',
-            'Live exchange rates or crypto prices are temporarily unavailable. Please try again.',
-          ),
+          body: errorBody('CURRENCY_UNAVAILABLE', CRYPTO_ERROR_MESSAGES[err.reason]),
         };
       }
       throw err;

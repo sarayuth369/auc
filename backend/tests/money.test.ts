@@ -179,18 +179,23 @@ describe('resolveMoneyRequest - deterministic cross-rate arithmetic, never AI', 
     },
   };
   const usdPrices: Record<string, number> = { BTC: 65000, ETH: 3250 };
+  // Mirrors what CryptoPriceGateway.getRate does internally (direct-pair-or-
+  // cross-via-USD) - money.ts just asks for a rate between two assets now.
   const cryptoPriceProvider = {
-    getUsdPrice: async (symbol: string) => {
-      if (usdPrices[symbol] === undefined) throw new Error(`unexpected symbol ${symbol}`);
-      return { price: usdPrices[symbol], stale: false };
-    },
-    getUsdPrices: async (symbols: string[]) => {
-      const result: Record<string, { price: number; stale: boolean }> = {};
-      for (const symbol of symbols) {
-        if (usdPrices[symbol] === undefined) throw new Error(`unexpected symbol ${symbol}`);
-        result[symbol] = { price: usdPrices[symbol], stale: false };
+    getRate: async (base: string, quote: string) => {
+      if (base === quote) return { rate: 1, stale: false };
+      if (quote === 'USD') {
+        if (usdPrices[base] === undefined) throw new Error(`unexpected symbol ${base}`);
+        return { rate: usdPrices[base], stale: false };
       }
-      return result;
+      if (base === 'USD') {
+        if (usdPrices[quote] === undefined) throw new Error(`unexpected symbol ${quote}`);
+        return { rate: 1 / usdPrices[quote], stale: false };
+      }
+      if (usdPrices[base] === undefined || usdPrices[quote] === undefined) {
+        throw new Error(`unexpected pair ${base}/${quote}`);
+      }
+      return { rate: usdPrices[base] / usdPrices[quote], stale: false };
     },
   };
   const resolvers = { fiatRateProvider, cryptoPriceProvider };

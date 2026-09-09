@@ -771,11 +771,12 @@ describe('resolveConversion', () => {
   describe('crypto / mixed money (never sent to AI)', () => {
     const usdPrices: Record<string, number> = { BTC: 65000, ETH: 3250 };
     const cryptoProvider = {
-      getUsdPrice: async (symbol: string) => ({ price: usdPrices[symbol] ?? 1, stale: false }),
-      getUsdPrices: async (symbols: string[]) => {
-        const result: Record<string, { price: number; stale: boolean }> = {};
-        for (const symbol of symbols) result[symbol] = { price: usdPrices[symbol] ?? 1, stale: false };
-        return result;
+      getRate: async (base: string, quote: string) => {
+        if (base === quote) return { rate: 1, stale: false };
+        const baseUsd = usdPrices[base] ?? 1;
+        if (quote === 'USD') return { rate: baseUsd, stale: false };
+        const quoteUsd = usdPrices[quote] ?? 1;
+        return { rate: baseUsd / quoteUsd, stale: false };
       },
     };
     const fiatProvider = {
@@ -869,10 +870,7 @@ describe('resolveConversion', () => {
     it('53. an unavailable crypto price provider returns a controlled CURRENCY_UNAVAILABLE error, never a fabricated price', async () => {
       const fetchImpl = fetchThrowing('should not be called');
       const failingCryptoProvider = {
-        getUsdPrice: async () => {
-          throw new Error('price feed down');
-        },
-        getUsdPrices: async () => {
+        getRate: async () => {
           throw new Error('price feed down');
         },
       };

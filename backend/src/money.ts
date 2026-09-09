@@ -18,7 +18,7 @@
  * the two prices/rates are fetched.
  */
 import { resolveCurrencyCode, type CurrencyRateProvider } from './currency';
-import { resolveCryptoSymbol, type CryptoPriceProvider } from './crypto';
+import { CryptoPriceUnavailableError, resolveCryptoSymbol, type CryptoUnavailableReason } from './crypto';
 import { dimensionOf } from './dimensions';
 
 export type AssetType = 'fiat' | 'crypto';
@@ -140,11 +140,25 @@ export function detectAmbiguousMoneyRequest(text: string): { unrecognizedToken: 
   return { unrecognizedToken: unrecognizedPhrase };
 }
 
-export class MoneyRateUnavailableError extends Error {}
+export class MoneyRateUnavailableError extends Error {
+  constructor(
+    message: string,
+    readonly reason: CryptoUnavailableReason = 'NO_PROVIDER_AVAILABLE',
+  ) {
+    super(message);
+  }
+}
+
+/** What resolveMoneyRequest needs from the crypto side - implemented by
+ *  CryptoPriceGateway (see crypto-gateway.ts), which owns direct-pair vs
+ *  cross-rate-via-USD internally so this module stays pure arithmetic. */
+export interface CryptoRateSource {
+  getRate(base: string, quote: string): Promise<{ rate: number; stale: boolean }>;
+}
 
 export interface MoneyResolvers {
   fiatRateProvider: CurrencyRateProvider;
-  cryptoPriceProvider: CryptoPriceProvider;
+  cryptoPriceProvider: CryptoRateSource;
 }
 
 export interface MoneyResolution {
@@ -178,37 +192,35 @@ export async function resolveMoneyRequest(
     }
 
     if (from.type === 'crypto' && to.type === 'crypto') {
-      const prices = await resolvers.cryptoPriceProvider.getUsdPrices([from.code, to.code]);
-      const fromPrice = prices[from.code];
-      const toPrice = prices[to.code];
-      if (!fromPrice || !toPrice) {
-        throw new Error(`Missing price for ${from.code} or ${to.code}.`);
-      }
-      const rate = fromPrice.price / toPrice.price;
-      return { result: amount * rate, rate, stale: fromPrice.stale || toPrice.stale };
+      // Direct pair vs cross-rate-via-USD is entirely CryptoPriceGateway's
+      // decision (see crypto-gateway.ts) - this module never fetches two
+      // legs itself, it just asks for the rate between the two assets.
+      const { rate, stale } = await resolvers.cryptoPriceProvider.getRate(from.code, to.code);
+      return { result: amount * rate, rate, stale };
     }
 
     if (from.type === 'crypto' && to.type === 'fiat') {
-      const cryptoUsd = await resolvers.cryptoPriceProvider.getUsdPrice(from.code);
-      const usdAmount = amount * cryptoUsd.price;
+      const { rate: cryptoUsd, stale } = await resolvers.cryptoPriceProvider.getRate(from.code, 'USD');
+      const usdAmount = amount * cryptoUsd;
       if (to.code === 'USD') {
-        return { result: usdAmount, rate: cryptoUsd.price, stale: cryptoUsd.stale };
+        return { result: usdAmount, rate: cryptoUsd, stale };
       }
       const fxRate = await resolvers.fiatRateProvider.getRate('USD', to.code);
-      return { result: usdAmount * fxRate, rate: cryptoUsd.price * fxRate, stale: cryptoUsd.stale };
+      return { result: usdAmount * fxRate, rate: cryptoUsd * fxRate, stale };
     }
 
     // from.type === 'fiat' && to.type === 'crypto'
-    const cryptoUsd = await resolvers.cryptoPriceProvider.getUsdPrice(to.code);
+    const { rate: cryptoUsd, stale } = await resolvers.cryptoPriceProvider.getRate(to.code, 'USD');
     let usdAmount = amount;
     let fxRate = 1;
     if (from.code !== 'USD') {
       fxRate = await resolvers.fiatRateProvider.getRate(from.code, 'USD');
       usdAmount = amount * fxRate;
     }
-    const rate = fxRate / cryptoUsd.price;
-    return { result: usdAmount / cryptoUsd.price, rate, stale: cryptoUsd.stale };
+    const rate = fxRate / cryptoUsd;
+    return { result: usdAmount / cryptoUsd, rate, stale };
   } catch (err) {
-    throw new MoneyRateUnavailableError(err instanceof Error ? err.message : 'Rate/price unavailable.');
+    const reason = err instanceof CryptoPriceUnavailableError ? err.reason : undefined;
+    throw new MoneyRateUnavailableError(err instanceof Error ? err.message : 'Rate/price unavailable.', reason);
   }
 }

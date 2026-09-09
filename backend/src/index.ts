@@ -4,7 +4,7 @@ import { corsHeaders } from './cors';
 import { errorBody } from './errors';
 import { PRIVACY_POLICY_HTML } from './privacy-policy-html';
 import { checkRateLimit, type RateLimitEntry } from './ratelimit';
-import { resolveConversion, type ResolveEnv } from './resolve';
+import { defaultCryptoPriceProvider, resolveConversion, type ResolveEnv } from './resolve';
 
 export interface Env extends ResolveEnv {}
 
@@ -49,6 +49,14 @@ export default {
         status: 200,
         headers: { 'Content-Type': 'text/html; charset=UTF-8', ...headers },
       });
+    }
+
+    if (url.pathname === '/api/crypto-health' && request.method === 'GET') {
+      // Internal observability only (task section 46): per-provider
+      // success/failure counts and current cooldown state, so it's obvious
+      // which crypto market-data provider is having trouble. No secrets,
+      // no user data - just provider names and counters.
+      return json({ providers: defaultCryptoPriceProvider.getProviderStats() }, 200, headers);
     }
 
     if (url.pathname === '/api/billing/entitlement' && request.method === 'GET') {
