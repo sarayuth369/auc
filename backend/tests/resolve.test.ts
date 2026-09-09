@@ -767,4 +767,133 @@ describe('resolveConversion', () => {
       expect(result.body).toMatchObject({ result: 100, rate: 1 });
     });
   });
+
+  describe('crypto / mixed money (never sent to AI)', () => {
+    const cryptoProvider = {
+      getUsdPrice: async (symbol: string) => (symbol === 'BTC' ? 65000 : symbol === 'ETH' ? 3250 : 1),
+    };
+    const fiatProvider = {
+      getRate: async (from: string, to: string) => {
+        if (from === to) return 1;
+        if (from === 'USD' && to === 'THB') return 33;
+        if (from === 'THB' && to === 'USD') return 1 / 33;
+        throw new Error(`unexpected fiat pair ${from}->${to}`);
+      },
+    };
+
+    it('48. "1 btc = thb" (the exact reported failure) resolves crypto -> fiat, never AI', async () => {
+      const fetchImpl = fetchThrowing('AI must not be called for a crypto request');
+      const result = await resolveConversion(
+        { text: '1 btc = thb' },
+        env,
+        { fetchImpl, currencyRateProvider: fiatProvider, cryptoPriceProvider: cryptoProvider },
+      );
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({
+        success: true,
+        intent: 'currency_convert',
+        assetType: 'mixed',
+        from: 'BTC',
+        to: 'THB',
+        amount: 1,
+        result: 65000 * 33,
+      });
+    });
+
+    it('49. "1 ETH = BTC" resolves crypto -> crypto via a USD cross-rate, never AI', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      const result = await resolveConversion(
+        { text: '1 ETH = BTC' },
+        env,
+        { fetchImpl, currencyRateProvider: fiatProvider, cryptoPriceProvider: cryptoProvider },
+      );
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({
+        success: true,
+        assetType: 'crypto',
+        from: 'ETH',
+        to: 'BTC',
+      });
+      expect((result.body as { result: number }).result).toBeCloseTo(3250 / 65000, 10);
+    });
+
+    it('50. "1000 THB = BTC" resolves fiat -> crypto, never AI', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      const result = await resolveConversion(
+        { text: '1000 THB = BTC' },
+        env,
+        { fetchImpl, currencyRateProvider: fiatProvider, cryptoPriceProvider: cryptoProvider },
+      );
+      expect(result.status).toBe(200);
+      const body = result.body as { assetType: string; result: number };
+      expect(body.assetType).toBe('mixed');
+      expect(body.result).toBeCloseTo(1000 / 33 / 65000, 12);
+    });
+
+    it('51. natural-language crypto: "1 Bitcoin = THB" and "1 บิทคอยน์ = บาท"', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      for (const text of ['1 Bitcoin = THB', '1 บิทคอยน์ = บาท']) {
+        const result = await resolveConversion(
+          { text },
+          env,
+          { fetchImpl, currencyRateProvider: fiatProvider, cryptoPriceProvider: cryptoProvider },
+        );
+        expect(result.status).toBe(200);
+        expect(result.body).toMatchObject({ from: 'BTC', to: 'THB' });
+      }
+    });
+
+    it('52. natural-language Thai fiat: "100 บาทเป็นดอลลาร์" (the other reported failure), never AI', async () => {
+      const fetchImpl = fetchThrowing('AI must not be called for a natural-language Thai fiat request');
+      const usdThbProvider = {
+        getRate: async (from: string, to: string) => {
+          if (from === 'THB' && to === 'USD') return 1 / 33;
+          throw new Error('unexpected pair');
+        },
+      };
+      const result = await resolveConversion(
+        { text: '100 บาทเป็นดอลลาร์' },
+        env,
+        { fetchImpl, currencyRateProvider: usdThbProvider, cryptoPriceProvider: cryptoProvider },
+      );
+      expect(result.status).toBe(200);
+      expect(result.body).toMatchObject({ success: true, assetType: 'fiat', from: 'THB', to: 'USD' });
+    });
+
+    it('53. an unavailable crypto price provider returns a controlled CURRENCY_UNAVAILABLE error, never a fabricated price', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      const failingCryptoProvider = {
+        getUsdPrice: async () => {
+          throw new Error('price feed down');
+        },
+      };
+      const result = await resolveConversion(
+        { text: '1 BTC = THB' },
+        env,
+        { fetchImpl, currencyRateProvider: fiatProvider, cryptoPriceProvider: failingCryptoProvider },
+      );
+      expect(result.status).toBe(502);
+      expect(result.body).toMatchObject({ success: false, error: { code: 'CURRENCY_UNAVAILABLE' } });
+    });
+
+    it('54. an unrecognized asset returns a friendly UNKNOWN_MONEY_ASSET error, not "Unknown unit"', async () => {
+      const fetchImpl = fetchThrowing('should not be called');
+      const result = await resolveConversion({ text: '1 abc = thb' }, env, { fetchImpl });
+      expect(result.status).toBe(422);
+      expect(result.body).toMatchObject({
+        success: false,
+        error: { code: 'UNKNOWN_MONEY_ASSET', message: 'Unknown currency or asset: "abc".' },
+      });
+    });
+
+    it('55. "100 kg = USD" is NOT misreported as an unknown asset - it still reaches the normal pipeline', async () => {
+      const fetchImpl = fetchReturning(
+        geminiOk({ intent: 'convert', language: 'en', items: [{ value: 100, unit: 'kilogram' }], target_unit: 'us_dollar' }),
+      );
+      const result = await resolveConversion({ text: '100 kg = USD' }, env, { fetchImpl });
+      // Whatever AI does with this nonsensical request, it must not be
+      // reported as an "unknown money asset" for the perfectly valid "kg".
+      expect(result.body).not.toMatchObject({ error: { code: 'UNKNOWN_MONEY_ASSET' } });
+    });
+  });
 });

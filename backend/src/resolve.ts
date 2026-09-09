@@ -1,6 +1,9 @@
 import { CloudflareAiInvalidResponseError, CloudflareAiRequestError } from './cloudflare-ai';
-import { CachingRateProvider, CurrencyRateUnavailableError, extractCurrencyRequest, FrankfurterRateProvider } from './currency';
+import { CachingRateProvider, FrankfurterRateProvider } from './currency';
 import type { CurrencyRateProvider } from './currency';
+import { CachingCryptoPriceProvider, CoinGeckoPriceProvider } from './crypto';
+import type { CryptoPriceProvider } from './crypto';
+import { detectAmbiguousMoneyRequest, extractMoneyRequest, MoneyRateUnavailableError, resolveMoneyRequest } from './money';
 import { clarificationBody, errorBody } from './errors';
 import { DEFAULT_MODEL, GeminiInvalidResponseError, GeminiRequestError } from './gemini';
 import { findDimensionMismatch } from './dimensions';
@@ -23,12 +26,15 @@ export interface ResolveDeps {
   fetchImpl: typeof fetch;
   /** Injectable for tests; defaults to a cached Frankfurter provider (see currency.ts). */
   currencyRateProvider?: CurrencyRateProvider;
+  /** Injectable for tests; defaults to a cached CoinGecko provider (see crypto.ts). */
+  cryptoPriceProvider?: CryptoPriceProvider;
 }
 
 // Module-scope (persists for the Worker isolate's lifetime, same pattern as
-// ratelimit.ts's store) so the FX cache is actually shared across requests
-// instead of being rebuilt every call.
+// ratelimit.ts's store) so the FX/price caches are actually shared across
+// requests instead of being rebuilt every call.
 const defaultCurrencyRateProvider = new CachingRateProvider(new FrankfurterRateProvider());
+const defaultCryptoPriceProvider = new CachingCryptoPriceProvider(new CoinGeckoPriceProvider());
 
 export interface ResolveOutcome {
   status: number;
@@ -80,37 +86,63 @@ export async function resolveConversion(
     }
   }
 
-  // Currency is a separate, deterministic category: never sent to AI (which
-  // must never invent an exchange rate), detected purely from recognized
-  // ISO currency codes, computed once a real rate is fetched.
-  const currencyRequest = extractCurrencyRequest(validation.text);
-  if (currencyRequest) {
-    const provider = deps.currencyRateProvider ?? defaultCurrencyRateProvider;
+  // Money (fiat and/or crypto) is a separate, deterministic category: never
+  // sent to AI (which must never invent an exchange rate or a crypto
+  // price), detected purely from recognized currency codes/names and crypto
+  // symbols/names, computed once real rates/prices are fetched. This is the
+  // fix for the core "Unknown unit: us_dollar"/"Unknown unit: thb" bug -
+  // money must be classified BEFORE it can ever reach the physical Unit
+  // Registry, and detection must accept the natural-language connectors
+  // (Thai included) real users actually type, not just "="/"to".
+  const moneyRequest = extractMoneyRequest(validation.text);
+  if (moneyRequest) {
     try {
-      const rate = await provider.getRate(currencyRequest.from, currencyRequest.to);
+      const { result, rate } = await resolveMoneyRequest(moneyRequest, {
+        fiatRateProvider: deps.currencyRateProvider ?? defaultCurrencyRateProvider,
+        cryptoPriceProvider: deps.cryptoPriceProvider ?? defaultCryptoPriceProvider,
+      });
+      const assetType =
+        moneyRequest.from.type === moneyRequest.to.type ? moneyRequest.from.type : 'mixed';
       return {
         status: 200,
         body: {
           success: true,
           intent: 'currency_convert',
-          from: currencyRequest.from,
-          to: currencyRequest.to,
-          amount: currencyRequest.amount,
+          assetType,
+          from: moneyRequest.from.code,
+          to: moneyRequest.to.code,
+          amount: moneyRequest.amount,
           rate,
-          result: currencyRequest.amount * rate,
+          result,
           asOf: new Date().toISOString(),
         },
       };
     } catch (err) {
-      if (err instanceof CurrencyRateUnavailableError) {
-        console.error('Currency rate unavailable:', err.message);
+      if (err instanceof MoneyRateUnavailableError) {
+        console.error('Money rate/price unavailable:', err.message);
         return {
           status: 502,
-          body: errorBody('CURRENCY_UNAVAILABLE', 'Currency rates are temporarily unavailable. Please try again.'),
+          body: errorBody(
+            'CURRENCY_UNAVAILABLE',
+            'Live exchange rates or crypto prices are temporarily unavailable. Please try again.',
+          ),
         };
       }
       throw err;
     }
+  }
+
+  // "1 abc = thb": clearly money-shaped (one recognized asset, one that
+  // isn't) - a friendly "unknown currency or asset" beats either routing to
+  // AI (which has no rate for an asset it can't identify) or letting a
+  // stray token fall through to the physical Unit Registry's generic
+  // "Unknown unit" message.
+  const ambiguousMoney = detectAmbiguousMoneyRequest(validation.text);
+  if (ambiguousMoney) {
+    return {
+      status: 422,
+      body: errorBody('UNKNOWN_MONEY_ASSET', `Unknown currency or asset: "${ambiguousMoney.unrecognizedToken}".`),
+    };
   }
 
   if (env.AI_ENABLED === 'false') {

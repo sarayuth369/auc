@@ -397,4 +397,84 @@ void main() {
       await expectLater(service.resolveIntent('100 THB = USD'), throwsA(isA<ConversionException>()));
     });
   });
+
+  group('crypto / mixed money responses (Money Intelligence)', () {
+    Future<CurrencyResolvedException> resolveExpectingCurrency(
+      Map<String, dynamic> responseBody,
+      String input,
+    ) async {
+      final client = MockClient((request) async {
+        return http.Response(jsonEncode(responseBody), 200);
+      });
+      final service = RemoteAiResolverService(baseUrl: 'https://example.test', client: client);
+      try {
+        await service.resolveIntent(input);
+        fail('expected CurrencyResolvedException');
+      } on CurrencyResolvedException catch (e) {
+        return e;
+      }
+    }
+
+    test('assetType "crypto" is tagged categoryId "crypto" with 8-decimal precision', () async {
+      final e = await resolveExpectingCurrency({
+        'success': true,
+        'intent': 'currency_convert',
+        'assetType': 'crypto',
+        'from': 'ETH',
+        'to': 'BTC',
+        'amount': 1,
+        'rate': 0.05,
+        'result': 0.05000123,
+        'asOf': '2026-09-09T00:00:00.000Z',
+      }, '1 ETH = BTC');
+      expect(e.result.categoryId, 'crypto');
+      expect(e.result.displayText, '0.05000123 BTC');
+    });
+
+    test('assetType "mixed" (fiat<->crypto) is also tagged categoryId "crypto"', () async {
+      final e = await resolveExpectingCurrency({
+        'success': true,
+        'intent': 'currency_convert',
+        'assetType': 'mixed',
+        'from': 'BTC',
+        'to': 'THB',
+        'amount': 1,
+        'rate': 2145000,
+        'result': 2145000.5,
+        'asOf': '2026-09-09T00:00:00.000Z',
+      }, '1 BTC = THB');
+      expect(e.result.categoryId, 'crypto');
+      expect(e.result.unit, 'THB');
+    });
+
+    test('a small crypto amount never displays as "0" - falls back to scientific notation past 8 decimals', () async {
+      final e = await resolveExpectingCurrency({
+        'success': true,
+        'intent': 'currency_convert',
+        'assetType': 'mixed',
+        'from': 'THB',
+        'to': 'BTC',
+        'amount': 100,
+        'rate': 0.0000000154,
+        'result': 0.00000000154,
+        'asOf': '2026-09-09T00:00:00.000Z',
+      }, '100 THB = BTC');
+      expect(e.result.displayText, isNot(contains('0 BTC')));
+      expect(e.result.value, isNot(0));
+    });
+
+    test('missing assetType (plain fiat, backward compatible) still uses categoryId "currency" and 4 decimals', () async {
+      final e = await resolveExpectingCurrency({
+        'success': true,
+        'intent': 'currency_convert',
+        'from': 'THB',
+        'to': 'USD',
+        'amount': 100,
+        'rate': 0.0287,
+        'result': 2.87,
+        'asOf': '2026-09-09T00:00:00.000Z',
+      }, '100 THB = USD');
+      expect(e.result.categoryId, 'currency');
+    });
+  });
 }

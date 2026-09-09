@@ -13,6 +13,7 @@ import '../../../services/conversion_service.dart';
 String? _categoryLabel(String categoryId) {
   if (categoryId == calculationCategoryId) return 'Calculation';
   if (categoryId == 'currency') return 'Live exchange rate';
+  if (categoryId == 'crypto') return 'Live crypto price';
   return null;
 }
 

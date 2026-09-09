@@ -118,11 +118,11 @@ class RemoteAiResolverService implements AiResolverService {
     );
   }
 
-  /// Builds the already-computed [ConversionResult] for a currency response
-  /// - see [CurrencyResolvedException]. The rate/result numbers came from
-  /// the backend's real FX provider (never AI); this only validates shape
-  /// and formats for display, exactly like [ConversionEngine.formatNumber]
-  /// does for every other category.
+  /// Builds the already-computed [ConversionResult] for a money (fiat and/or
+  /// crypto) response - see [CurrencyResolvedException]. The rate/result
+  /// numbers came from the backend's real FX/crypto-price providers (never
+  /// AI); this only validates shape and formats for display, exactly like
+  /// [ConversionEngine.formatNumber] does for every other category.
   ConversionResult _parseCurrencyResult(Map<String, dynamic> body, String inputText) {
     final to = body['to'];
     final result = body['result'];
@@ -131,15 +131,20 @@ class RemoteAiResolverService implements AiResolverService {
         'The AI resolver returned a malformed currency result.',
       );
     }
+    // Crypto amounts can be meaningfully small (e.g. 100 THB -> a fraction
+    // of a BTC) - more headroom than fiat's 4 decimals before falling back
+    // to scientific notation, matching conventional crypto precision.
+    final assetType = body['assetType'];
+    final isCryptoInvolved = assetType == 'crypto' || assetType == 'mixed';
     return ConversionResult(
       inputText: inputText,
       value: result.toDouble(),
       unit: to,
-      // 4 decimals so small currency conversions (e.g. 10 THB -> a fraction
-      // of a USD) still show meaningful precision instead of rounding away
-      // to a near-useless 2-decimal figure.
-      formattedValue: ConversionEngine.formatNumber(result.toDouble(), maxDecimals: 4),
-      categoryId: 'currency',
+      formattedValue: ConversionEngine.formatNumber(
+        result.toDouble(),
+        maxDecimals: isCryptoInvolved ? 8 : 4,
+      ),
+      categoryId: isCryptoInvolved ? 'crypto' : 'currency',
     );
   }
 

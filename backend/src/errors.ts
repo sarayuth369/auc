@@ -7,7 +7,8 @@ export type ErrorCode =
   | 'NEEDS_CLARIFICATION'
   | 'UNSUPPORTED_CONVERSION'
   | 'NOT_IMPLEMENTED'
-  | 'CURRENCY_UNAVAILABLE';
+  | 'CURRENCY_UNAVAILABLE'
+  | 'UNKNOWN_MONEY_ASSET';
 
 export interface ErrorBody {
   success: false;
