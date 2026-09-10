@@ -45,6 +45,11 @@ dependencies:
   google_mobile_ads: ^9.1.0
   # Opens the Privacy Policy link from Settings/About in an external browser.
   url_launcher: ^6.3.1
+  # Reads the app's actual installed version/build number at runtime (About
+  # screen, update-version comparison) - never hardcoded.
+  package_info_plus: ^8.3.0
+  # Google Play In-App Updates (Android) for the force-update flow.
+  in_app_update: ^5.0.0
 
 dev_dependencies:
   flutter_test:

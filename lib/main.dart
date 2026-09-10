@@ -10,6 +10,7 @@ import 'data/unit_repository.dart';
 import 'domain/conversion_engine.dart';
 import 'l10n/home_placeholder.dart';
 import 'services/ai_config_service.dart';
+import 'services/app_update_service.dart';
 import 'services/ai_resolver_service.dart';
 import 'services/conversion_service.dart';
 import 'services/favorites_service.dart';
@@ -68,6 +69,7 @@ Future<void> main() async {
           settingsService: settingsService,
           themeModeNotifier: themeModeNotifier,
           convertPlaceholder: convertPlaceholder,
+          appUpdateService: AppUpdateService(baseUrl: BackendConfig.baseUrl),
         ),
       );
     },

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/privacy_config.dart';
@@ -202,12 +203,23 @@ class AboutScreen extends StatelessWidget {
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 4),
-            Text(
-              'Version 1.0.0',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
-              ),
+            FutureBuilder<PackageInfo>(
+              // The version comes from the platform's actual installed
+              // package metadata, never a hardcoded string - falls back to
+              // the current shipped version (matches pubspec.yaml) while
+              // loading or if unavailable (e.g. running outside a real
+              // platform install), never crashes or shows a blank line.
+              future: PackageInfo.fromPlatform(),
+              builder: (context, snapshot) {
+                final version = snapshot.data?.version ?? '1.0.0';
+                return Text(
+                  'Version $version',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
+                );
+              },
             ),
             if (hasPrivacyUrl) ...[
               const SizedBox(height: 16),

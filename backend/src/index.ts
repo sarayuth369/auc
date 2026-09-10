@@ -1,3 +1,4 @@
+import { buildAppUpdateConfig, type AppUpdateEnv } from './app-config';
 import { classifyRtdn, decodeRtdnPayload, FREE_ENTITLEMENT } from './billing';
 import { buildPublicConfig } from './config';
 import { corsHeaders } from './cors';
@@ -6,7 +7,7 @@ import { PRIVACY_POLICY_HTML } from './privacy-policy-html';
 import { checkRateLimit, type RateLimitEntry } from './ratelimit';
 import { defaultCryptoPriceProvider, resolveConversion, type ResolveEnv } from './resolve';
 
-export interface Env extends ResolveEnv {}
+export interface Env extends ResolveEnv, AppUpdateEnv {}
 
 // Module-scoped: persists only for the lifetime of one Worker isolate.
 // Best-effort abuse protection without adding infrastructure (see ratelimit.ts).
@@ -39,6 +40,14 @@ export default {
       // location signal used is Cloudflare's own request.cf.country (never
       // the raw IP, never logged) - just to pick a curated UI language.
       return json(buildPublicConfig(env, request.cf?.country as string | undefined), 200, headers);
+    }
+
+    if (url.pathname === '/api/app-config' && request.method === 'GET') {
+      // Application update policy - deliberately separate from /api/config
+      // (AI/runtime config, unrelated concept). Public, no secrets: just
+      // version strings and a Play Store URL. Server is the source of
+      // truth; Flutter only reads and compares.
+      return json(buildAppUpdateConfig(env), 200, headers);
     }
 
     if (url.pathname === '/privacy-policy' && request.method === 'GET') {

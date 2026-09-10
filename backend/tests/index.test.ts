@@ -48,6 +48,32 @@ describe('regression: existing routes still work', () => {
     const body = (await response.json()) as { billing: unknown };
     expect(body.billing).toEqual({ enabled: false, premiumProductId: 'smartconverter_premium_monthly' });
   });
+
+  it('GET /api/app-config returns the Android update policy, separate from /api/config', async () => {
+    const response = await worker.fetch(
+      new Request('https://auc-backend.example/api/app-config'),
+      env as never,
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { configVersion: number; app: { android: unknown } };
+    expect(body.configVersion).toBe(1);
+    expect(body.app.android).toMatchObject({
+      latestVersion: expect.any(String),
+      minimumSupportedVersion: expect.any(String),
+      forceUpdate: expect.any(Boolean),
+      storeUrl: expect.stringContaining('play.google.com'),
+    });
+  });
+
+  it('GET /api/crypto-health still works alongside the new app-config route', async () => {
+    const response = await worker.fetch(
+      new Request('https://auc-backend.example/api/crypto-health'),
+      env as never,
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { providers: unknown };
+    expect(body.providers).toBeTruthy();
+  });
 });
 
 describe('billing endpoints (foundation - no real verification yet)', () => {
